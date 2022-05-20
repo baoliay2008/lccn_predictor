@@ -15,4 +15,6 @@ MIT License
 
 # TODO
 
-- [ ] add pip `requirements.txt` after removing redundant dependencies.
+- [x] add pip `requirements.txt` after removing redundant dependencies.
+
+
