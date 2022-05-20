@@ -1,0 +1,6 @@
+mongodb:
+  ip: 127.0.0.1
+  port: 27017
+  username: "change_to_your_username"
+  password: "change_to_your_password"
+  db: "lccn"
