@@ -31,11 +31,21 @@ class ContestFinal(Contest):
 
 
 class User(Document):
+    # save latest value
     username: Indexed(str)
     user_slug: Indexed(str)
-    latest_rating: int
-    latest_count: int
-    # TODO: add historical rating
+    data_region: Indexed(str)
+    update_time: datetime
+    # following come from graphql
+    attendedContestsCount: int
+    rating: float
+    globalRanking: int
+    topPercentage: float
+    totalParticipants:  Optional[int] = None  # US
+    localRanking: Optional[int] = None  # CN
+    globalTotalParticipants: Optional[int] = None  # CN
+    localTotalParticipants: Optional[int] = None  # CN
+    # TODO: add historical rating, save into a array.
 
 
 

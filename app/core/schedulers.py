@@ -1,11 +1,11 @@
 import asyncio
-
+from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 async def say_hi():
     await asyncio.sleep(0.1)
-    print('hi')
+    print(f'{datetime.utcnow()}\thi')
 
 
 async def start_scheduler():

@@ -8,8 +8,7 @@ from motor.core import AgnosticClient, AgnosticCollection, AgnosticDatabase  # b
 from beanie import init_beanie, Document
 
 from app.config import get_yaml_config
-from app.db.models import ContestPredict, ContestFinal
-
+from app.db.models import ContestPredict, ContestFinal, User
 
 async_mongodb_client = None
 
@@ -47,6 +46,6 @@ def get_async_mongodb_connection(col_name) -> AgnosticCollection:
 
 async def start_async_mongodb() -> None:
     async_mongodb_database = get_async_mongodb_database()
-    await init_beanie(database=async_mongodb_database, document_models=[ContestPredict, ContestFinal])
+    await init_beanie(database=async_mongodb_database, document_models=[ContestPredict, ContestFinal, User])
 
 

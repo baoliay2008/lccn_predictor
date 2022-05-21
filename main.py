@@ -1,14 +1,14 @@
 import asyncio
+
+from app.crawler.users import insert_users
 from app.db.mongodb import start_async_mongodb
-from app.core.crawler import start_crawler
-from app.core.schedulers import start_scheduler
 
 
 async def start():
     await start_async_mongodb()
-    await start_scheduler()
-    await start_crawler()
-
+    # await start_scheduler()
+    # await start_crawler()
+    await insert_users()
 
 if __name__ == "__main__":
     # asyncio.run(start())
