@@ -106,19 +106,6 @@ async def get_user_rating_us(user_list) -> None:
                                         totalParticipants
                                         topPercentage
                                     }
-                                    userContestRankingHistory(username: $username) {
-                                        attended
-                                        trendDirection
-                                        problemsSolved
-                                        totalProblems
-                                        finishTimeInSeconds
-                                        rating
-                                        ranking
-                                        contest {
-                                            title
-                                            startTime
-                                        }
-                                    }
                                 }
                             """,
                     "variables": {"username": user["username"]},
@@ -155,7 +142,8 @@ async def get_single_contest_ranking(contest_name: str):
     # weekly-contest-293
     # biweekly-contest-78
     req = httpx.get(
-        f"https://leetcode.com/contest/api/ranking/{contest_name}/"
+        f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+        timeout=60
     )
     data = req.json()
     user_num = data.get("user_num")
@@ -222,10 +210,29 @@ async def save_historical_contest(contest_name):
     await asyncio.gather(*tasks)
 
 
+async def check_contest_user_num(contest_name):
+    req = httpx.get(
+        f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+        timeout=60
+    )
+    data = req.json()
+    user_num = data.get("user_num")
+    final_num = await ContestFinal.find(ContestFinal.contest_name == contest_name).count()
+    predict_num = await ContestPredict.find(ContestPredict.contest_name == contest_name).count()
+    print(f"check_contest_user_num {contest_name}. total {user_num}, final {final_num}, predict {predict_num}")
+    print(f"final get all records? {user_num == final_num}")
+    print(f"predict get all records? {user_num == predict_num}")
+
+
 async def start_crawler():
     # await save_temporary_contest(contest_name="weekly-contest-293")
-    for i in range(293, 100, -1):
-        await save_historical_contest(contest_name=f"weekly-contest-{i}")
+    for i in range(293, 62, -1):
+        # await save_historical_contest(contest_name=f"weekly-contest-{i}")
+        await check_contest_user_num(contest_name=f"weekly-contest-{i}")
+    for i in range(61, 0, -1):
+        # await save_historical_contest(contest_name=f"weekly-contest-{i}")
+        await check_contest_user_num(contest_name=f"weekly-contest-{i}")
     for i in range(78, 0, -1):
-        await save_historical_contest(contest_name=f"biweekly-contest-{i}")
+        # await save_historical_contest(contest_name=f"biweekly-contest-{i}")
+        await check_contest_user_num(contest_name=f"biweekly-contest-{i}")
 
