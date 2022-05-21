@@ -9,8 +9,6 @@ from app.crawler.utils import multi_http_request
 from app.db.models import ContestPredict, ContestFinal
 
 
-
-
 async def get_single_contest_ranking(contest_name: str):
     # weekly-contest-293
     # biweekly-contest-78

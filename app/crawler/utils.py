@@ -36,7 +36,7 @@ async def multi_http_request(
                     # TODO: Very high memory usage here when saving response directly, say, if run 20000 requests.
                     response_mapper[key] = response
                 else:
-                    print(f"multi_http_request_with_retry error: {response}")
+                    print(f"multi_http_request error: {response} {response.text}")
                     response_mapper[key] += 1
                     wait_time += 1
                     crawler_queue.append((key, request))

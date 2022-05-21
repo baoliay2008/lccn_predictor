@@ -1,9 +1,5 @@
-import json
 import asyncio
-import traceback
 from datetime import datetime
-
-import httpx
 
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestFinal, User
@@ -12,157 +8,91 @@ from app.db.mongodb import get_async_mongodb_connection
 DEFAULT_RATING_FOR_NEWCOMER = '{"attendedContestsCount": 0, "rating": 1500}'
 
 
-async def get_user_rating_cn(user_list) -> None:
-    response_list = await multi_http_request(
+async def multi_insert(graphql_response_list, user_dict_list):
+    update_tasks = list()
+    for response, user_dict in zip(graphql_response_list, user_dict_list):
+        if response is None:
+            continue
+        data = response.json().get("data", {}).get("userContestRanking")
+        if not data:
+            continue
+        user_dict.pop("_id")
+        user_dict.update({"update_time": datetime.utcnow()})
+        user_dict.update(data)
+        user = User.parse_obj(user_dict)
+        update_tasks.append(User.insert_one(user))
+    await asyncio.gather(*update_tasks)
+
+
+async def multi_request_user_cn(cn_multi_request_list):
+    cn_response_list = await multi_http_request(
         {
-            user["user_slug"]: {
+            user_dict["user_slug"]: {
                 "url": "https://leetcode-cn.com/graphql/noj-go/",
                 "method": "POST",
                 "json": {
                     "query": """
-                                query userContestRankingInfo($userSlug: String!) {
-                                         userContestRanking(userSlug: $userSlug) {
-                                             attendedContestsCount
-                                             rating
-                                             globalRanking
-                                             localRanking
-                                             globalTotalParticipants
-                                             localTotalParticipants
-                                             topPercentage
-                                         }
-                                     }
-                            """,
-                    "variables": {"userSlug": user["user_slug"]},
+                                             query userContestRankingInfo($userSlug: String!) {
+                                                     userContestRanking(userSlug: $userSlug) {
+                                                         attendedContestsCount
+                                                         rating
+                                                         globalRanking
+                                                         topPercentage
+                                                         localRanking
+                                                         globalTotalParticipants
+                                                         localTotalParticipants
+                                                     }
+                                                 }
+                                             """,
+                    "variables": {"userSlug": user_dict["user_slug"]},
                 },
             }
-            for user in user_list
+            for user_dict in cn_multi_request_list
         }
     )
-    for response, user in zip(response_list, user_list):
-        if response is None:
-            continue
-        data = response.json().get("data")
-        user.update(
-            data["userContestRanking"] or json.loads(DEFAULT_RATING_FOR_NEWCOMER)
-        )
+    await multi_insert(cn_response_list, cn_multi_request_list)
+    cn_multi_request_list.clear()
 
 
-async def get_user_rating_us(user_list) -> None:
-    response_list = await multi_http_request(
+async def multi_request_user_us(us_multi_request_list):
+    us_response_list = await multi_http_request(
         {
-            user["user_slug"]: {
+            user_dict["username"]: {
                 "url": "https://leetcode.com/graphql/",
                 "method": "POST",
                 "json": {
                     "query": """
-                                query getContestRankingData($username: String!) {
-                                    userContestRanking(username: $username) {
-                                        attendedContestsCount
-                                        rating
-                                        globalRanking
-                                        totalParticipants
-                                        topPercentage
-                                    }
-                                }
-                            """,
-                    "variables": {"username": user["username"]},
+                                             query getContestRankingData($username: String!) {
+                                                userContestRanking(username: $username) {
+                                                    attendedContestsCount
+                                                    rating
+                                                    globalRanking
+                                                    topPercentage
+                                                    totalParticipants
+                                                }
+                                             }
+                                             """,
+                    "variables": {"username": user_dict["username"]},
                 },
             }
-            for user in user_list
+            for user_dict in us_multi_request_list
         }
     )
-    for response, user in zip(response_list, user_list):
-        if response is None:
-            continue
-        data = response.json().get("data")
-        user.update(
-            data["userContestRanking"] or json.loads(DEFAULT_RATING_FOR_NEWCOMER)
-        )
-
-
-async def update_user_rating(user_list):
-    # Notice that if a user didn't attend any contests, return data will be `{'userContestRanking': None}`,
-    # and this issue has been taken care of in `get_user_rating_cn` and `get_user_rating_us` by using default value
-    cn_user_list = list()
-    us_user_list = list()
-    for user in user_list:
-        if user.get("data_region") == "CN":
-            cn_user_list.append(user)
-        else:
-            us_user_list.append(user)
-    await asyncio.gather(
-        get_user_rating_cn(cn_user_list), get_user_rating_us(us_user_list)
-    )
-
-
-async def post_user_contest_ranking_info_cn(user_slug):
-    async with httpx.AsyncClient() as client:  # TODO: take out client to reuse.
-        response = await client.post(
-            url="https://leetcode-cn.com/graphql/noj-go/",
-            json={
-                "query": """
-                                    query userContestRankingInfo($userSlug: String!) {
-                                             userContestRanking(userSlug: $userSlug) {
-                                                 attendedContestsCount
-                                                 rating
-                                                 globalRanking
-                                                 topPercentage
-                                                 localRanking
-                                                 globalTotalParticipants
-                                                 localTotalParticipants
-                                             }
-                                         }
-                                """,
-                "variables": {"userSlug": user_slug},
-            },
-        )
-        if response.status_code == 200:
-            return response.json().get("data", {}).get("userContestRanking")
-        else:
-            print(
-                f"post_user_contest_ranking_info_cn request failed. username {user_slug}, {response.status_code}"
-            )
-            return {}
-
-
-async def post_user_contest_ranking_info_us(username):
-    async with httpx.AsyncClient() as client:  # TODO: take out client to reuse.
-        response = await client.post(
-            url="https://leetcode.com/graphql/",
-            json={
-                "query": """
-                                query getContestRankingData($username: String!) {
-                                    userContestRanking(username: $username) {
-                                        attendedContestsCount
-                                        rating
-                                        globalRanking
-                                        topPercentage
-                                        totalParticipants
-                                    }
-                                }
-                            """,
-                "variables": {"username": username},
-            },
-        )
-        if response.status_code == 200:
-            return response.json().get("data", {}).get("userContestRanking")
-        else:
-            print(
-                f"post_user_contest_ranking_info_us request failed. username {username}, {response.status_code}"
-            )
-            return
+    await multi_insert(us_response_list, us_multi_request_list)
+    us_multi_request_list.clear()
 
 
 async def insert_users():
     # currently there is no distinct method in beanie
     # https://github.com/roman-right/beanie/pull/268/commits
     # here have to write raw mongo queries, aggregate, or iterate on duplicated username
-
     col = get_async_mongodb_connection(ContestFinal.__name__)
-
-    i = 0
+    cn_multi_request_list = list()
+    us_multi_request_list = list()
+    concurrent_num = 100
     async for doc in col.aggregate(
         [
+            {"$sort": {"contest_name": 1}},
             {
                 "$group": {
                     "_id": "$username",
@@ -170,50 +100,22 @@ async def insert_users():
                     "user_slug": {"$first": "$user_slug"},
                     "data_region": {"$first": "$data_region"},
                 }
-            }
+            },
         ]
     ):
-        i += 1
         if await User.find_one(User.username == doc["username"]):
             continue
+        if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
+            print(f"run multi_request_list \n"
+                  f"cn_multi_request_list{cn_multi_request_list}\n"
+                  f"us_multi_request_list{us_multi_request_list}")
+            await asyncio.gather(
+                multi_request_user_cn(cn_multi_request_list),
+                multi_request_user_us(us_multi_request_list),
+            )
         if doc["data_region"] == "CN":
-            user_contest_ranking_info = await post_user_contest_ranking_info_cn(
-                doc["user_slug"]
-            )
+            cn_multi_request_list.append(doc)
         elif doc["data_region"] == "US":
-            user_contest_ranking_info = await post_user_contest_ranking_info_us(
-                doc["username"]
-            )
+            us_multi_request_list.append(doc)
         else:
-            raise ValueError(f"data_region is not CN or US. doc={doc}")
-        if user_contest_ranking_info is None:
-            print(f"cannot find user_contest_ranking_info of {doc['username']}")
-            continue
-        try:
-            user = User(
-                username=doc["username"],
-                user_slug=doc["user_slug"],
-                data_region=doc["data_region"],
-                update_time=datetime.utcnow(),
-                attendedContestsCount=user_contest_ranking_info[
-                    "attendedContestsCount"
-                ],
-                rating=user_contest_ranking_info["rating"],
-                globalRanking=user_contest_ranking_info["globalRanking"],
-                topPercentage=user_contest_ranking_info["topPercentage"],
-            )
-            if doc["data_region"] == "CN":
-                user.localRanking = user_contest_ranking_info["localRanking"]
-                user.globalTotalParticipants = user_contest_ranking_info[
-                    "globalTotalParticipants"
-                ]
-                user.localTotalParticipants = user_contest_ranking_info[
-                    "localTotalParticipants"
-                ]
-            else:
-                user.totalParticipants = user_contest_ranking_info["totalParticipants"]
-            await User.insert_one(user)
-            print(f"successfully insert user {i}th {user}")
-        except Exception as e:
-            print(f"insert users error of {e}")
-            traceback.print_exc()
+            print("fatal error: data_region is not CN or US. doc={doc}")
