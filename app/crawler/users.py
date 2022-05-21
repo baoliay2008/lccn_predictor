@@ -48,7 +48,8 @@ async def multi_request_user_cn(cn_multi_request_list):
                 },
             }
             for user_dict in cn_multi_request_list
-        }
+        },
+        concurrent_num=10,
     )
     await multi_insert(cn_response_list, cn_multi_request_list)
     cn_multi_request_list.clear()
@@ -76,7 +77,8 @@ async def multi_request_user_us(us_multi_request_list):
                 },
             }
             for user_dict in us_multi_request_list
-        }
+        },
+        concurrent_num=10,
     )
     await multi_insert(us_response_list, us_multi_request_list)
     us_multi_request_list.clear()
@@ -89,7 +91,7 @@ async def insert_users():
     col = get_async_mongodb_connection(ContestFinal.__name__)
     cn_multi_request_list = list()
     us_multi_request_list = list()
-    concurrent_num = 100
+    concurrent_num = 200
     async for doc in col.aggregate(
         [
             {"$sort": {"contest_name": 1}},
