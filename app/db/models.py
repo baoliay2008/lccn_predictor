@@ -22,7 +22,14 @@ class Contest(Document):
 
 
 class ContestPredict(Contest):
+    # fields in Contest will be inserted only once, won't update further.
     insert_time: datetime
+    # following predicted fields will be inserted only once, too.
+    attendedContestsCount: Optional[int] = None
+    old_rating: Optional[float] = None
+    new_rating: Optional[float] = None
+    delta_rating: Optional[float] = None
+    predict_time: Optional[datetime] = None
 
 
 class ContestFinal(Contest):

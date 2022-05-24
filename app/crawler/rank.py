@@ -6,7 +6,7 @@ import httpx
 from beanie.odm.operators.update.general import Set
 
 from app.crawler.utils import multi_http_request
-from app.db.models import ContestPredict, ContestFinal
+from app.db.models import ContestPredict, ContestFinal, User
 
 
 async def get_single_contest_ranking(contest_name: str):
@@ -25,7 +25,8 @@ async def get_single_contest_ranking(contest_name: str):
         for page in range(1, page_max + 1)
     ]
     responses = await multi_http_request(
-        {url: {"url": url, "method": "GET"} for url in url_list}
+        {url: {"url": url, "method": "GET"} for url in url_list},
+        concurrent_num=10,
     )
     for res in responses:
         if res is None:
@@ -43,7 +44,8 @@ async def save_temporary_contest(contest_name):
         )
         if doc:
             print(f"doc found, won't insert. {doc}")
-        await ContestPredict.insert_one(_user_rank)
+        else:
+            await ContestPredict.insert_one(_user_rank)
     user_rank_list = await get_single_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
@@ -93,14 +95,21 @@ async def check_contest_user_num(contest_name):
     print(f"check_contest_user_num {contest_name}. total {user_num}, final {final_num}, predict {predict_num}")
     print(f"final get all records? {user_num == final_num}")
     print(f"predict get all records? {user_num == predict_num}")
+    saved_user_num = 0
+    async for doc in ContestPredict.find(ContestPredict.contest_name == contest_name):
+        if await User.find_one(User.username == doc.username):
+            saved_user_num += 1
+            print(saved_user_num)
+    print(f"User db saved_user_num={saved_user_num}")
+    print(f"all users now in User db? {user_num == saved_user_num}")
 
 
 async def start_crawler():
-    # await save_temporary_contest(contest_name="weekly-contest-293")
-    for i in range(293, 100, -1):
-        # await save_historical_contest(contest_name=f"weekly-contest-{i}")
-        await check_contest_user_num(contest_name=f"weekly-contest-{i}")
-    for i in range(78, 0, -1):
-        # await save_historical_contest(contest_name=f"biweekly-contest-{i}")
-        await check_contest_user_num(contest_name=f"biweekly-contest-{i}")
+    await check_contest_user_num(contest_name="weekly-contest-294")
+    # for i in range(293, 100, -1):
+    #     # await save_historical_contest(contest_name=f"weekly-contest-{i}")
+    #     await check_contest_user_num(contest_name=f"weekly-contest-{i}")
+    # for i in range(78, 0, -1):
+    #     # await save_historical_contest(contest_name=f"biweekly-contest-{i}")
+    #     await check_contest_user_num(contest_name=f"biweekly-contest-{i}")
 

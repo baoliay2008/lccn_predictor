@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 
 from app.crawler.utils import multi_http_request
-from app.db.models import ContestFinal, User
+from app.db.models import ContestFinal, User, ContestPredict
 from app.db.mongodb import get_async_mongodb_connection
 
 DEFAULT_RATING_FOR_NEWCOMER = '{"attendedContestsCount": 0, "rating": 1500}'
@@ -14,7 +14,9 @@ async def multi_insert(graphql_response_list, user_dict_list):
         if response is None:
             continue
         data = response.json().get("data", {}).get("userContestRanking")
-        if not data:
+        print(user_dict, data)
+        if data is None:
+            # should insert DEFAULT_RATING_FOR_NEWCOMER here
             continue
         user_dict.pop("_id")
         user_dict.update({"update_time": datetime.utcnow()})
@@ -84,17 +86,21 @@ async def multi_request_user_us(us_multi_request_list):
     us_multi_request_list.clear()
 
 
-async def insert_users():
+async def insert_users_of_a_contest(contest_name, predict=True):
     # currently there is no distinct method in beanie
     # https://github.com/roman-right/beanie/pull/268/commits
     # here have to write raw mongo queries, aggregate, or iterate on duplicated username
-    col = get_async_mongodb_connection(ContestFinal.__name__)
+    if predict:
+        col = get_async_mongodb_connection(ContestPredict.__name__)
+    else:
+        col = get_async_mongodb_connection(ContestFinal.__name__)
     cn_multi_request_list = list()
     us_multi_request_list = list()
     concurrent_num = 200
     async for doc in col.aggregate(
         [
-            {"$sort": {"contest_name": 1}},
+            {"$match": {"contest_name": contest_name}},
+            {"$sort": {"rank": 1}},
             {
                 "$group": {
                     "_id": "$username",
@@ -121,3 +127,15 @@ async def insert_users():
             us_multi_request_list.append(doc)
         else:
             print("fatal error: data_region is not CN or US. doc={doc}")
+
+
+async def insert_historical_contests_users():
+    # for i in range(293, 100, -1):
+    #     await insert_users_of_a_contest(contest_name=f"weekly-contest-{i}", predict=False)
+    # for i in range(78, 0, -1):
+    #     await insert_users_of_a_contest(contest_name=f"biweekly-contest-{i}", predict=False)
+    for i in range(278, 100, -1):
+        await insert_users_of_a_contest(contest_name=f"weekly-contest-{i}", predict=False)
+
+
+

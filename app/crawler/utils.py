@@ -7,6 +7,7 @@ import asyncio
 async def multi_http_request(
     multi_requests: Dict,
     concurrent_num: int = 5,
+    retry_num: int = 10,
 ) -> List[Optional[httpx.Response]]:
     response_mapper = defaultdict(int)  # values means: [int: retried time / Response: successful result]
     crawler_queue = deque(multi_requests.items())
@@ -19,7 +20,7 @@ async def multi_http_request(
         # wait_time = response_mapper[job_queue[-1][0]]
         while len(requests_list) < concurrent_num and crawler_queue:
             key, request = crawler_queue.popleft()
-            if response_mapper[key] >= 10:
+            if response_mapper[key] >= retry_num:
                 continue
             requests_list.append((key, request))
         if not requests_list:
@@ -38,7 +39,7 @@ async def multi_http_request(
                 else:
                     # response could be an Exception here
                     print(f"multi_http_request error: "
-                          f"{response.text if isinstance(response, httpx.Response) else response}")
+                          f"{response.status_code if isinstance(response, httpx.Response) else response}")
                     response_mapper[key] += 1
                     wait_time += 1
                     crawler_queue.append((key, request))
