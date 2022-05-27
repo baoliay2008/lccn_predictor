@@ -5,10 +5,10 @@ from motor.core import AgnosticClient, AgnosticCollection, AgnosticDatabase  # b
 # just for temporary autocompleting, given that motor doesn't have type annotations yet,
 # see https://jira.mongodb.org/browse/MOTOR-331
 # and https://www.mongodb.com/community/forums/t/support-for-type-hint/107593
-from beanie import init_beanie, Document
+from beanie import init_beanie
 
 from app.config import get_yaml_config
-from app.db.models import ContestPredict, ContestFinal, User
+from app.db.models import ContestRecordPredict, ContestRecordArchive, User
 
 async_mongodb_client = None
 
@@ -27,7 +27,8 @@ def get_async_mongodb_client() -> AgnosticClient:
         password = urllib.parse.quote_plus(get_mongodb_config().get("password"))
         db = get_mongodb_config().get("db")
         async_mongodb_client = AsyncIOMotorClient(
-            f"mongodb://{username}:{password}@{ip}:{port}/{db}"
+            f"mongodb://{username}:{password}@{ip}:{port}/{db}",
+            # connectTimeoutMS=None,
         )
     return async_mongodb_client
 
@@ -46,6 +47,13 @@ def get_async_mongodb_connection(col_name) -> AgnosticCollection:
 
 async def start_async_mongodb() -> None:
     async_mongodb_database = get_async_mongodb_database()
-    await init_beanie(database=async_mongodb_database, document_models=[ContestPredict, ContestFinal, User])
+    await init_beanie(
+        database=async_mongodb_database,
+        document_models=[
+            ContestRecordPredict,
+            ContestRecordArchive,
+            User,
+        ]
+    )
 
 

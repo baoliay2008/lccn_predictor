@@ -1,10 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel, validator
-from beanie import Document, Indexed
 from datetime import datetime
+from beanie import Document, Indexed
+from pydantic import Field
 
 
-class Contest(Document):
+class ContestRecord(Document):
     contest_name: Indexed(str)
     contest_id: int
     username: Indexed(str)
@@ -16,15 +16,11 @@ class Contest(Document):
     finish_time: int
     data_region: Indexed(str)
 
-    # @validator('contest_name')
-    # def contest_must_be_weekly_or_biweekly(cls, v):
-    #     pass
 
-
-class ContestPredict(Contest):
-    # fields in Contest will be inserted only once, won't update further.
-    insert_time: datetime
-    # following predicted fields will be inserted only once, too.
+class ContestRecordPredict(ContestRecord):
+    # Predicted records' will be inserted only once, won't update any fields.
+    # Records in this collection can be used to calculated MSE directly even after a long time because it won't change.
+    insert_time: datetime = Field(default_factory=datetime.utcnow)
     attendedContestsCount: Optional[int] = None
     old_rating: Optional[float] = None
     new_rating: Optional[float] = None
@@ -32,9 +28,10 @@ class ContestPredict(Contest):
     predict_time: Optional[datetime] = None
 
 
-class ContestFinal(Contest):
-    # leetcode will rejudge some submissions(cheat detection, add test cases, etc.), so will update here.
-    update_time: datetime
+class ContestRecordArchive(ContestRecord):
+    # Archived records will be updated.
+    # Leetcode will rejudge some submissions(cheat detection, add test cases, etc.)
+    update_time: datetime = Field(default_factory=datetime.utcnow)
 
 
 class User(Document):
@@ -42,17 +39,18 @@ class User(Document):
     username: Indexed(str)
     user_slug: Indexed(str)
     data_region: Indexed(str)
-    update_time: datetime
-    # following come from graphql
+    update_time: datetime = Field(default_factory=datetime.utcnow)
+    # following fields come from graphql
     attendedContestsCount: int
     rating: float
-    globalRanking: int
-    topPercentage: float
-    totalParticipants:  Optional[int] = None  # US
-    localRanking: Optional[int] = None  # CN
-    globalTotalParticipants: Optional[int] = None  # CN
-    localTotalParticipants: Optional[int] = None  # CN
-    # TODO: add historical rating, save into a array.
+    # removed the following six fields, they are useless, no need to save them now.(fields removed in graphql also)
+    # globalRanking: int
+    # topPercentage: float
+    # totalParticipants:  Optional[int] = None  # US users only
+    # localRanking: Optional[int] = None  # CN users only
+    # globalTotalParticipants: Optional[int] = None  # CN users only
+    # localTotalParticipants: Optional[int] = None  # CN users only
+    # TODO: add historical ranking field, save into an array. (array.length = attendedContestsCount)
 
 
 
