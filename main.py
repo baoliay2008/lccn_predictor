@@ -1,23 +1,26 @@
 import asyncio
 
 from app.core.predictor import predict_contest
-from app.crawler.rank import start_crawler
-from app.crawler.users import insert_historical_contests_users
+from app.core.schedulers import start_scheduler
+from app.crawler.contests import first_time_contest_crawler
+from app.crawler.users import first_time_user_crawler
 from app.db.mongodb import start_async_mongodb
 
 
 async def start():
     await start_async_mongodb()
-    # await start_scheduler()
-    # await start_crawler()
-    # await insert_historical_contests_users()
-    await predict_contest(contest_name="weekly-contest-294")
+    await start_scheduler()
+    await first_time_contest_crawler()
+    # await first_time_user_crawler()
+    # await predict_contest(contest_name="weekly-contest-294")
+    print("finished start in main.py")
+
 
 if __name__ == "__main__":
-    asyncio.run(start())
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(start())
-    # try:
-    #     loop.run_forever()
-    # except (KeyboardInterrupt, SystemExit):
-    #     pass
+    # asyncio.run(start())
+    loop = asyncio.new_event_loop()
+    loop.create_task(start())
+    try:
+        loop.run_forever()
+    except (KeyboardInterrupt, SystemExit):
+        pass

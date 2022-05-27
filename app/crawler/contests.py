@@ -108,10 +108,10 @@ async def check_contest_user_num(
     # join table query how many of the users of this contest have been inserted in User collection
     # for convenience, here use pymongo aggregate directly, not beanie ODM(poor aggregate $lookup support now).
     col = get_async_mongodb_connection(ContestRecordPredict.__name__)
-    res = list(
-        col.aggregate(
+    res = [
+        x async for x in col.aggregate(
             [
-                {"$match": {"contest_name", contest_name}},
+                {"$match": {"contest_name": contest_name}},
                 {"$lookup": {
                     "from": User.__name__,
                     "localField": "username",
@@ -122,14 +122,14 @@ async def check_contest_user_num(
                 {"$group": {"_id": "_id", "count": {"$sum": "$found_user_count"}}}
             ]
         )
-    )[0]
-    saved_user_num = res[0].get("count")
+    ]
+    saved_user_num = res[0].get("count") if res else 0
     print(f"User db saved_user_num={saved_user_num}")
     print(f"all users now in User db? {user_num == saved_user_num}")
 
 
 async def first_time_contest_crawler() -> None:
-    for i in range(293, 100, -1):
+    for i in range(294, 100, -1):
         await save_archive_contest(contest_name=f"weekly-contest-{i}")
         await check_contest_user_num(contest_name=f"weekly-contest-{i}")
     for i in range(78, 0, -1):
