@@ -109,11 +109,11 @@ async def upsert_users_from_a_contest(
         concurrent_num: int = 200,
 ) -> None:
     if in_predict_col:
-        to_be_queried = ContestRecordPredict.find_all(
+        to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
         )
     else:
-        to_be_queried = ContestRecordArchive.find_all(
+        to_be_queried = ContestRecordArchive.find(
             ContestRecordArchive.contest_name == contest_name,
         )
     cn_multi_request_list = list()
