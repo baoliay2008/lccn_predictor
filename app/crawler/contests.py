@@ -6,6 +6,7 @@ import asyncio
 import httpx
 from beanie.odm.operators.update.general import Set
 
+from app.crawler.users import upsert_users_from_a_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
 from app.db.mongodb import get_async_mongodb_connection
@@ -130,9 +131,13 @@ async def check_contest_user_num(
 
 async def first_time_contest_crawler() -> None:
     for i in range(294, 100, -1):
-        await save_archive_contest(contest_name=f"weekly-contest-{i}")
-        await check_contest_user_num(contest_name=f"weekly-contest-{i}")
+        contest_name = f"weekly-contest-{i}"
+        await save_archive_contest(contest_name=contest_name)
+        await upsert_users_from_a_contest(contest_name=contest_name, in_predict_col=False)
+        await check_contest_user_num(contest_name=contest_name)
     for i in range(78, 0, -1):
-        await save_archive_contest(contest_name=f"biweekly-contest-{i}")
-        await check_contest_user_num(contest_name=f"biweekly-contest-{i}")
+        contest_name = f"biweekly-contest-{i}"
+        await save_archive_contest(contest_name=contest_name)
+        await upsert_users_from_a_contest(contest_name=contest_name, in_predict_col=False)
+        await check_contest_user_num(contest_name=contest_name)
 

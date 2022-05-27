@@ -141,12 +141,3 @@ async def upsert_users_from_a_contest(
         multi_request_user_us(us_multi_request_list),
     )
 
-
-async def first_time_user_crawler() -> None:
-    for i in range(293, 100, -1):
-        await upsert_users_from_a_contest(contest_name=f"weekly-contest-{i}", in_predict_col=False)
-    for i in range(78, 0, -1):
-        await upsert_users_from_a_contest(contest_name=f"biweekly-contest-{i}", in_predict_col=False)
-
-
-
