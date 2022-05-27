@@ -8,6 +8,14 @@ async def say_hi():
     print(f'{datetime.utcnow()}\thi')
 
 
+async def predict_biweekly_contest():
+    pass
+
+
+async def predict_weekly_contest():
+    pass
+
+
 async def start_scheduler():
     scheduler = AsyncIOScheduler()
     scheduler.add_job(say_hi, 'interval', seconds=10)

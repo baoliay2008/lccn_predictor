@@ -1,21 +1,21 @@
 import asyncio
 from datetime import datetime
-import math
 from functools import lru_cache
-import time
+from typing import List
+from time import time
 
-import pandas as pd
 import numpy as np
 from beanie.odm.operators.update.general import Set
 from tqdm import tqdm
 from numba import jit
 
-from app.crawler.rank import save_temporary_contest
-from app.crawler.users import insert_users_of_a_contest
-from app.db.models import User, ContestPredict
+from app.crawler.contests import save_predict_contest
+from app.crawler.users import update_users_from_a_contest
+from app.db.models import User, ContestRecordPredict
 
 
-async def fill_old_rating(record: ContestPredict):
+async def fill_old_rating(record: ContestRecordPredict):
+    # TODO: if there is a biweekly contest within last 12 hours, use last predicted rating!
     user = await User.find_one(User.username == record.username)
     if not user:
         record.old_rating = 1500
@@ -41,105 +41,76 @@ def expected_win_rate(vector_element, constant):
 
 
 async def predict_contest(contest_name):
-    # await save_temporary_contest(contest_name)
-    # await insert_users_of_a_contest(contest_name)
-    records = (
-        await ContestPredict.find(ContestPredict.contest_name == contest_name)
-        .sort(ContestPredict.rank)
+    start_time = time()
+    await save_predict_contest(contest_name)
+    await update_users_from_a_contest(contest_name)
+    records: List[ContestRecordPredict] = (
+        await ContestRecordPredict.find(
+            ContestRecordPredict.contest_name == contest_name,
+            ContestRecordPredict.score != 0,
+        )
+        .sort(ContestRecordPredict.rank)
         .to_list()
     )
-    # tasks = (
-    #     fill_old_rating(record)
-    #     for record in records
-    # )
-    # await asyncio.gather(*tasks)
-    t0 = time.time()
-    df = pd.DataFrame(
-        [
-            {
-                "username": record.username,
-                "R": record.old_rating,
-                "k": record.attendedContestsCount,
-                "Rank": None,
-                # cannot use record.rank as Rank directly, calculate using finish_time
-                # because same score and finish_time should have same rank
-                "score": record.score * (-1),
-                "finish_time": record.finish_time,
-                "ERank": None,
-                "m": None,
-                "ER": None,
-                "fk": None,
-                "delta": None,
-                "new_rating": None,
-            }
-            for record in records
-        ]
+    tasks = (
+        fill_old_rating(record)
+        for record in records
     )
-    print(f"to pandas DataFrame cost {time.time()-t0} seconds")
-    df.to_csv("tmp/weekly_294_raw.csv", index=False)
-    # df = pd.read_csv("tmp/weekly_294_raw.csv")
-    df["Rank"] = df[["score", "finish_time"]].apply(tuple, axis=1).rank(method="min")
+    await asyncio.gather(*tasks)
 
-    rating_vector = df.R.to_numpy()
-    rank_vector = df.Rank.to_numpy()
-    k_vector = df.k.to_numpy()
+    rank_array = np.array([record.rank for record in records])
+    rating_array = np.array([record.old_rating for record in records])
+    k_array = np.array([record.attendedContestsCount for record in records])
 
-    e_rank_list = list()
-    m_list = list()
-    er_list = list()
-    fk_list = list()
+    expected_rating_list = list()
+    coefficient_of_delta_list = list()
 
-    for i in tqdm(range(len(rating_vector))):
+    for i in tqdm(range(len(rank_array))):
         # no need to filter itself, add all then minus 0.5 is the same.
-        # so, then + 1 - 0.5 = + 0.5 because include i=j is more convenient, can reuse expected_win_rate function.
-        e_rank = np.sum(expected_win_rate(rating_vector, rating_vector[i])) + 0.5
-        m = np.sqrt(e_rank * rank_vector[i])
+        # + 1 - 0.5 = + 0.5 works because including i=j is more convenient, can reuse expected_win_rate function below.
+        expected_rank = np.sum(expected_win_rate(rank_array, rank_array[i])) + 0.5
+        mean_rank = np.sqrt(expected_rank * rating_array[i])
         # Use binary search to find the expected rating, now set 15 for loops
         # TODO: could set a minimal [lo, hi] range to break the for loops in advance, which could be accurate enough.
         # Newton's method should be faster to solve this kind of problem, but the derivative of this function is not
         # easy to get(I don't know for now), maybe slower overall.
-        lo, hi = 0, 4000
-        target = m - 1
-        for t in range(15):
+        lo, hi = 0, 4000  # 4000 could be big enough, max rating now is 3686.
+        target = mean_rank - 1
+        # for t in range(15):
+        while hi - lo > 0.1:
             # if hi - lo < 0.5:
             #     break
             mid = lo + (hi - lo) / 2
-            tmp = np.sum(expected_win_rate(rating_vector, mid))
-            if tmp < target:
+            approximation = np.sum(expected_win_rate(rank_array, mid))
+            if approximation < target:
                 hi = mid
             else:
                 lo = mid
-        er = mid
-        fk = fk_for_delta_coefficient(k_vector[i])
-        e_rank_list.append(e_rank)
-        m_list.append(m)
-        er_list.append(er)
-        fk_list.append(fk)
-    df["ERank"] = e_rank_list
-    df["m"] = m_list
-    df["ER"] = er_list
-    df["fk"] = fk_list
-    df["delta"] = df["fk"] * (df["ER"] - df["R"])
-    df["new_rating"] = df["R"] + df["delta"]
-    df.to_csv("tmp/weekly_294_predicted.csv", index=False)
-    # df = pd.read_csv("tmp/weekly_294_predicted.csv")
-    print(df)
+        expected_rating = mid
+        coefficient_of_delta = fk_for_delta_coefficient(k_array[i])
+        expected_rating_list.append(expected_rating)
+        coefficient_of_delta_list.append(coefficient_of_delta)
+    expected_rating_array = np.array(expected_rating_list)
+    coefficient_of_delta_array = np.array(coefficient_of_delta_list)
+    delta_array = coefficient_of_delta_array * (expected_rating_array - rating_array)
+    new_rating_array = rating_array + delta_array
+
+    # update ContestRecordPredict collection
     tasks = list()
-    for index, row in df.iterrows():
+    for record, new_rating, delta in zip(records, new_rating_array, delta_array):
         tasks.append(
-            ContestPredict.find_one(
-                ContestPredict.username == row.username,
-                ContestPredict.finish_time == row.finish_time,  # change to data_region, I didn't save if when sorting.
+            ContestRecordPredict.find_one(
+                ContestRecordPredict.id == record.id,
             ).update(
                 Set(
                     {
-                        ContestPredict.new_rating: row.new_rating,
-                        ContestPredict.delta_rating: row.delta,
-                        ContestPredict.predict_time: datetime.utcnow(),
+                        ContestRecordPredict.delta_rating: delta,
+                        ContestRecordPredict.new_rating: new_rating,
+                        ContestRecordPredict.predict_time: datetime.utcnow(),
                     }
                 )
             )
         )
-    print(len(tasks))
     await asyncio.gather(*tasks)
+    print(f"predict_contest finished, total cost = {time() - start_time} seconds")
 

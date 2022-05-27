@@ -9,8 +9,8 @@ from app.db.mongodb import start_async_mongodb
 async def start():
     await start_async_mongodb()
     await start_scheduler()
-    await first_time_contest_crawler()
-    # await predict_contest(contest_name="weekly-contest-294")
+    # await first_time_contest_crawler()
+    await predict_contest(contest_name="weekly-contest-294")
     print("finished start in main.py")
 
 

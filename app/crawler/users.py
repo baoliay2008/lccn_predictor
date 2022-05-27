@@ -103,9 +103,10 @@ async def multi_request_user_us(
     us_multi_request_list.clear()
 
 
-async def upsert_users_from_a_contest(
+async def update_users_from_a_contest(
         contest_name: str,
         in_predict_col: bool = True,
+        new_user_only: bool = True,
         concurrent_num: int = 200,
 ) -> None:
     if in_predict_col:
@@ -119,6 +120,13 @@ async def upsert_users_from_a_contest(
     cn_multi_request_list = list()
     us_multi_request_list = list()
     async for contest_record in to_be_queried:
+        if new_user_only and await User.find_one(
+            User.username == contest_record.username,
+            User.data_region == contest_record.data_region,
+        ):
+            # TODO, iterate ContestRecord and find User one by one is slow, aggregate two collections would be faster.
+            print(f"user in db already, won't update, {contest_record}")
+            continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
             print(f"for loop run multi_request_list \n"
                   f"cn_multi_request_list{cn_multi_request_list}\n"
