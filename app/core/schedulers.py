@@ -8,12 +8,6 @@ from app.constant import WEEKLY_CONTEST_END, BIWEEKLY_CONTEST_END, \
 from app.core.predictor import predict_contest
 
 
-async def say_hi():
-    print("say_hi start")
-    await asyncio.sleep(10)
-    print(f'{datetime.utcnow()}\thi')
-
-
 async def predict_biweekly_contest():
     utc = datetime.utcnow()
     passed_weeks = round(

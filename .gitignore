@@ -1,3 +1,6 @@
+# MacOS
+.DS_Store
+
 # root directory config
 /config.yaml
 
