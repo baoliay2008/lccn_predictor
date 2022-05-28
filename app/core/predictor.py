@@ -78,8 +78,8 @@ async def predict_contest(
     for i in tqdm(range(len(rank_array))):
         # no need to filter itself, add all then minus 0.5 is the same.
         # + 1 - 0.5 = + 0.5 works because including i=j is more convenient, can reuse expected_win_rate function below.
-        expected_rank = np.sum(expected_win_rate(rank_array, rank_array[i])) + 0.5
-        mean_rank = np.sqrt(expected_rank * rating_array[i])
+        expected_rank = np.sum(expected_win_rate(rating_array, rating_array[i])) + 0.5
+        mean_rank = np.sqrt(expected_rank * rank_array[i])
         # Use binary search to find the expected rating, now set 15 for loops
         # TODO: could set a minimal [lo, hi] range to break the for loops in advance, which could be accurate enough.
         # Newton's method should be faster to solve this kind of problem, but the derivative of this function is not
@@ -91,7 +91,7 @@ async def predict_contest(
             # if hi - lo < 0.5:
             #     break
             mid = lo + (hi - lo) / 2
-            approximation = np.sum(expected_win_rate(rank_array, mid))
+            approximation = np.sum(expected_win_rate(rating_array, mid))
             if approximation < target:
                 hi = mid
             else:
@@ -126,7 +126,7 @@ async def predict_contest(
     if update_user_using_prediction:
         print(f"immediately write predicted result back into User collection.")
         tasks = (
-            await User.find_one(
+            User.find_one(
                 User.username == record.username,
                 User.data_region == record.data_region,
             ).update(
@@ -140,3 +140,4 @@ async def predict_contest(
             ) for record in records
         )
         await asyncio.gather(*tasks)
+        print(f"updated user using predicted result")
