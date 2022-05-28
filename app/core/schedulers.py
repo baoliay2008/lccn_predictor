@@ -25,7 +25,7 @@ async def predict_biweekly_contest():
     contest_name = f"biweekly-contest-{passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
     print(f"predict_biweekly_contest running, contest_name={contest_name}")
     await asyncio.sleep(15)
-    await predict_contest(contest_name=contest_name)
+    await predict_contest(contest_name=contest_name, update_user_using_prediction=True)
 
 
 async def predict_weekly_contest():

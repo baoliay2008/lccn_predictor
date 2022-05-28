@@ -2,7 +2,6 @@ import asyncio
 from datetime import datetime
 from functools import lru_cache
 from typing import List
-from time import time
 
 import numpy as np
 from beanie.odm.operators.update.general import Set
@@ -15,8 +14,10 @@ from app.db.models import User, ContestRecordPredict
 
 
 async def fill_old_rating(record: ContestRecordPredict):
-    # TODO: if there is a biweekly contest within last 12 hours, use last predicted rating!
-    user = await User.find_one(User.username == record.username)
+    user = await User.find_one(
+        User.username == record.username,
+        User.data_region == record.data_region,
+    )
     if not user:
         record.old_rating = 1500
         record.attendedContestsCount = 0
@@ -40,8 +41,17 @@ def expected_win_rate(vector_element, constant):
     return 1 / (1 + np.power(10, (constant - vector_element) / 400))
 
 
-async def predict_contest(contest_name):
-    start_time = time()
+async def predict_contest(
+        contest_name: str,
+        update_user_using_prediction: bool = False,
+) -> None:
+    """
+    core predict function using official contest rating algorithm.
+    :param contest_name:
+    :param update_user_using_prediction: use for biweekly contest because next day's weekly contest needs the latest.
+    :return:
+    """
+    print("start run predict_contest")
     await save_predict_contest(contest_name)
     await update_users_from_a_contest(contest_name)
     records: List[ContestRecordPredict] = (
@@ -112,5 +122,21 @@ async def predict_contest(contest_name):
             )
         )
     await asyncio.gather(*tasks)
-    print(f"predict_contest finished, total cost = {time() - start_time} seconds")
-
+    print(f"predict_contest finished updating ContestRecordPredict")
+    if update_user_using_prediction:
+        print(f"immediately write predicted result back into User collection.")
+        tasks = (
+            await User.find_one(
+                User.username == record.username,
+                User.data_region == record.data_region,
+            ).update(
+                Set(
+                    {
+                        User.rating: record.new_rating,
+                        User.attendedContestsCount: record.attendedContestsCount + 1,
+                        User.update_time: datetime.utcnow(),
+                    }
+                )
+            ) for record in records
+        )
+        await asyncio.gather(*tasks)
