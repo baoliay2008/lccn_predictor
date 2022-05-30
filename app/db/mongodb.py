@@ -40,7 +40,7 @@ def get_async_mongodb_database(db_name=None) -> AgnosticDatabase:
     return client[db_name]
 
 
-def get_async_mongodb_connection(col_name) -> AgnosticCollection:
+def get_async_mongodb_collection(col_name) -> AgnosticCollection:
     db = get_async_mongodb_database()
     return db[col_name]
 
@@ -53,7 +53,7 @@ async def start_async_mongodb() -> None:
             ContestRecordPredict,
             ContestRecordArchive,
             User,
-        ]
+        ],
     )
 
 

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="{{url_for('static', path='/styles.css')}}">
+
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!--Import materialize.css-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+
+<body>
+
+    <header>
+        <nav class="black">
+            <div class="nav-wrapper">
+                <a href="/" class="brand-logo left"><i class="large material-icons" style="margin-left: 20px">home</i></a>
+                <ul id="nav-mobile" class="right">
+                    <li><a href="https://github.com/baoliay2008/lccn_predictor">Github</a></li>
+                    <li><a href="https://leetcode.cn/contest/">LCCN</a></li>
+                    <li><a href="https://leetcode.com/contest/">LCUS</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <title>{{contest_name}}</title>
+    </header>
+
+
+    <main>
+
+        <div class="container centered" style="margin-bottom:30px;">
+            <div class="row">
+                <div class="col s1">
+                    <a class="waves-effect waves-light btn-small black" href="/" style="display: flex; justify-content: center;">
+                        <i class="material-icons">arrow_back</i>
+                    </a>
+                </div>
+                <div class="col s9 m10 l10" style="text-align: center; font-size: 1.5rem;">
+                    {{' '.join(contest_name.split('-')) | title }}
+                </div>
+                <div class="col s1">
+                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}" style="display: flex; justify-content: center;">
+                        <i class="material-icons">refresh</i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container centered">
+            <form class="col s12" action="/{{contest_name}}/query_user" method="POST">
+                <div class="row">
+                    <div class="input-field col s6 offset-s2 m4 offset-m4 l4 offset-l4">
+                        <i class="material-icons prefix">account_circle</i>
+                        <input name="username" id="username" type="text" class="validate">
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="col s2 m2 l2">
+                        <button class="btn-small waves-effect waves-light black" type="submit" name="/{{contest_name}}" style="margin-top: 25px">
+                            <i class="material-icons">search</i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <table class="container highlight centered responsive-table">
+            <thead>
+                <tr class="card-panel blue lighten-2">
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Region</th>
+                    <th>Old Rating</th>
+                    <th>New Rating</th>
+                    <th>Delta</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in user_list %}
+                <tr>
+                    <td class="grey lighten-5">#{{user.rank}}</td>
+                    <td>
+                        {% if user.data_region == 'CN' %}
+                        <a href="https://leetcode.cn/u/{{user.username}}">{{user.username}}</a>
+                        {% else %}
+                        <a href="https://leetcode.com/{{user.username}}">{{user.username}}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{user.country_name if user.country_name}}</td>
+                    <td>{{user.old_rating | round(2)}}</td>
+                    <td>{{user.new_rating | round(2)}}</td>
+                    {% if user.delta_rating > 0 %}
+                    <td style="background-color:hsla(0, 100%, 66%, {{0.1 + user.delta_rating / 100}});">
+                        {{"+{}".format(user.delta_rating | round(2))}}
+                    </td>
+                    {% else %}
+                    <td style="background-color:hsla(120, 100%, 66%, {{0.2 - user.delta_rating / 100}});">
+                        {{user.delta_rating | round(2)}}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if user_list.__len__() == 0 %}
+        <div class="container" style="text-align: center; font-size: 15px;">Cannot find any records</div>>
+        {% endif %}
+
+        {% if current_page %}
+        <div class="container">
+            <ul class="pagination">
+
+                {% if current_page == 1 %}
+                    <li class="disabled"><a href="#!"><i class="material-icons">fast_rewind</i></a></li>
+                    <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+                {% else %}
+                    <li class="waves-effect"><a href="/{{contest_name}}/1"><i class="material-icons">fast_rewind</i></a></li>
+                    <li class="waves-effect"><a href="/{{contest_name}}/{{current_page - 1}}"><i class="material-icons">chevron_left</i></a></li>
+                {% endif %}
+
+                {% for single_page in pagination_list%}
+                    {% if single_page == current_page %}
+                    <li class="active blue lighten-2"><a href="/{{contest_name}}/{{single_page}}">{{single_page}}</a></li>
+                    {% else %}
+                    <li class="waves-effect"><a href="/{{contest_name}}/{{single_page}}">{{single_page}}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if current_page == max_page %}
+                    <li class="disabled"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+                    <li class="disabled"><a href="#!"><i class="material-icons">fast_forward</i></a></li>
+                {% else %}
+                    <li class="waves-effect"><a href="/{{contest_name}}/{{current_page + 1}}"><i class="material-icons">chevron_right</i></a></li>
+                    <li class="waves-effect"><a href="/{{contest_name}}/{{max_page}}"><i class="material-icons">fast_forward</i></a></li>
+                {% endif %}
+
+            </ul>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <footer class="page-footer black">
+        <div class="container">
+            <div class="row">
+                <div class="col l6 s12">
+                    <h5 class="white-text">LCCN Predictor</h5>
+                    <p class="grey-text text-lighten-4">Leetcode weekly and biweekly contest rating predictor.</p>
+                    <a class="waves-effect waves-light btn blue lighten-2" href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20www.baoli.host">
+                        <i class="material-icons left">share</i>twitter
+                    </a>
+<!--                    <a class="twitter-share-button" data-show-count="false" data-size="large"-->
+<!--                        href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20www.baoli.host">Share-->
+<!--                    </a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>-->
+
+                </div>
+                <div class="col l4 offset-l2 s12">
+                    <h5 class="white-text">Links</h5>
+                    <ul>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor">Source Code</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/issues">Issues</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/pulls">Pull Requests</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/blob/main/LICENSE">License</a></li>
+<!--                        <li>-->
+<!--                            <a class="github-button right" href="https://github.com/baoliay2008" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-size="large" aria-label="Follow @baoliay2008 on GitHub">Follow @baoliay2008</a>-->
+<!--                        </li>-->
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <div class="container">
+                © 2022 Copyright Li Bao.
+                <a class="grey-text text-lighten-4 right" href="https://github.com/baoliay2008">Follow me on Github</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<!--    <script async defer src="https://buttons.github.io/buttons.js"></script>-->
+
+</html>

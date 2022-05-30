@@ -17,6 +17,7 @@ MIT License
 
 # TODO
 
+- [ ] deploy application using Docker.
 - [x] add pip `requirements.txt` after removing redundant dependencies.
 
 

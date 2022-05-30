@@ -9,7 +9,7 @@ from beanie.odm.operators.update.general import Set
 from app.crawler.users import update_users_from_a_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
-from app.db.mongodb import get_async_mongodb_connection
+from app.db.mongodb import get_async_mongodb_collection
 
 
 async def get_single_contest_ranking(
@@ -108,7 +108,7 @@ async def check_contest_user_num(
     print(f"predict get all records? {user_num == predict_num}")
     # join table query how many of the users of this contest have been inserted in User collection
     # for convenience, here use pymongo aggregate directly, not beanie ODM(poor aggregate $lookup support now).
-    col = get_async_mongodb_connection(ContestRecordPredict.__name__)
+    col = get_async_mongodb_collection(ContestRecordPredict.__name__)
     res = [
         x async for x in col.aggregate(
             [
