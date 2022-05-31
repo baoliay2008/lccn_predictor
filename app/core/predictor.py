@@ -3,9 +3,9 @@ from datetime import datetime
 from functools import lru_cache
 from typing import List
 
+from loguru import logger
 import numpy as np
 from beanie.odm.operators.update.general import Set
-from tqdm import tqdm
 from numba import jit
 
 from app.crawler.contests import save_predict_contest
@@ -51,7 +51,7 @@ async def predict_contest(
     :param update_user_using_prediction: use for biweekly contest because next day's weekly contest needs the latest.
     :return:
     """
-    print("start run predict_contest")
+    logger.info("start run predict_contest")
     await save_predict_contest(contest_name)
     await update_users_from_a_contest(contest_name)
     records: List[ContestRecordPredict] = (
@@ -75,7 +75,8 @@ async def predict_contest(
     expected_rating_list = list()
     coefficient_of_delta_list = list()
 
-    for i in tqdm(range(len(rank_array))):
+    logger.info("start loop for calculating expected_rating")
+    for i in range(len(rank_array)):
         # no need to filter itself, add all then minus 0.5 is the same.
         # + 1 - 0.5 = + 0.5 works because including i=j is more convenient, can reuse expected_win_rate function below.
         expected_rank = np.sum(expected_win_rate(rating_array, rating_array[i])) + 0.5
@@ -100,6 +101,7 @@ async def predict_contest(
         coefficient_of_delta = fk_for_delta_coefficient(k_array[i])
         expected_rating_list.append(expected_rating)
         coefficient_of_delta_list.append(coefficient_of_delta)
+    logger.info("end loop for calculating expected_rating")
     expected_rating_array = np.array(expected_rating_list)
     coefficient_of_delta_array = np.array(coefficient_of_delta_list)
     delta_array = coefficient_of_delta_array * (expected_rating_array - rating_array)
@@ -122,9 +124,9 @@ async def predict_contest(
             )
         )
     await asyncio.gather(*tasks)
-    print(f"predict_contest finished updating ContestRecordPredict")
+    logger.info(f"predict_contest finished updating ContestRecordPredict")
     if update_user_using_prediction:
-        print(f"immediately write predicted result back into User collection.")
+        logger.info(f"immediately write predicted result back into User collection.")
         tasks = (
             User.find_one(
                 User.username == record.username,
@@ -140,4 +142,4 @@ async def predict_contest(
             ) for record in records
         )
         await asyncio.gather(*tasks)
-        print(f"updated user using predicted result")
+        logger.info(f"updated user using predicted result")

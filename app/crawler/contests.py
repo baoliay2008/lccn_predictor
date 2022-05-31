@@ -3,6 +3,7 @@ from typing import List, Dict
 from math import ceil
 import asyncio
 
+from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
@@ -49,7 +50,7 @@ async def save_predict_contest(
             ContestRecordPredict.data_region == _user_rank.data_region,
         )
         if doc:
-            print(f"doc found, won't insert. {doc}")
+            logger.info(f"doc found, won't insert. {doc}")
         else:
             await ContestRecordPredict.insert_one(_user_rank)
     user_rank_list = await get_single_contest_ranking(contest_name)
@@ -103,9 +104,9 @@ async def check_contest_user_num(
     user_num = data.get("user_num")
     archive_num = await ContestRecordArchive.find(ContestRecordArchive.contest_name == contest_name).count()
     predict_num = await ContestRecordPredict.find(ContestRecordPredict.contest_name == contest_name).count()
-    print(f"check_contest_user_num {contest_name}. total {user_num}, archive {archive_num}, predict {predict_num}")
-    print(f"archive get all records? {user_num == archive_num}")
-    print(f"predict get all records? {user_num == predict_num}")
+    logger.info(f"check_contest_user_num {contest_name}. total {user_num}, archive {archive_num}, predict {predict_num}")
+    logger.info(f"archive get all records? {user_num == archive_num}")
+    logger.info(f"predict get all records? {user_num == predict_num}")
     # join table query how many of the users of this contest have been inserted in User collection
     # for convenience, here use pymongo aggregate directly, not beanie ODM(poor aggregate $lookup support now).
     col = get_async_mongodb_collection(ContestRecordPredict.__name__)
@@ -125,8 +126,8 @@ async def check_contest_user_num(
         )
     ]
     saved_user_num = res[0].get("count") if res else 0
-    print(f"User db saved_user_num={saved_user_num}")
-    print(f"all users now in User db? {user_num == saved_user_num}")
+    logger.info(f"User db saved_user_num={saved_user_num}")
+    logger.info(f"all users now in User db? {user_num == saved_user_num}")
 
 
 async def first_time_contest_crawler() -> None:

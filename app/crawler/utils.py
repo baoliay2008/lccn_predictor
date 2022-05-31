@@ -1,5 +1,7 @@
 from typing import List, Dict, Optional
 from collections import deque, defaultdict
+
+from loguru import logger
 import httpx
 import asyncio
 
@@ -25,7 +27,7 @@ async def multi_http_request(
             requests_list.append((key, request))
         if not requests_list:
             break
-        print(f"remaining={len(crawler_queue) / total_num * 100 :.2f}% wait_time={wait_time} "
+        logger.info(f"remaining={len(crawler_queue) / total_num * 100 :.2f}% wait_time={wait_time} "
               f"requests_list={[(key, response_mapper[key]) for key, request in requests_list]}")
         await asyncio.sleep(wait_time)
         async with httpx.AsyncClient() as client:
@@ -38,7 +40,7 @@ async def multi_http_request(
                     response_mapper[key] = response
                 else:
                     # response could be an Exception here
-                    print(f"multi_http_request error: "
+                    logger.info(f"multi_http_request error: "
                           f"{response.status_code if isinstance(response, httpx.Response) else response}")
                     response_mapper[key] += 1
                     wait_time += 1

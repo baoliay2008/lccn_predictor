@@ -1,5 +1,6 @@
 import urllib.parse
 
+from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
 from motor.core import AgnosticClient, AgnosticCollection, AgnosticDatabase  # bad idea to use these three here,
 # just for temporary autocompleting, given that motor doesn't have type annotations yet,
@@ -55,5 +56,6 @@ async def start_async_mongodb() -> None:
             User,
         ],
     )
+    logger.success("started mongodb connection")
 
 

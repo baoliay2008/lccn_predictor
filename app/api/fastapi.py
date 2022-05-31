@@ -2,6 +2,7 @@ import math
 from typing import List, Tuple, Optional
 import asyncio
 
+from loguru import logger
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -36,7 +37,7 @@ async def contest_page_get(
         ) for contest_name in contest_name_list
     ]
     distinct_contests = await asyncio.gather(*tasks)
-    print(distinct_contests)
+    logger.debug(distinct_contests)
     # TODO: support showing contests metadata in homepage, do the following things:
     # 1. Add a contests table in db, save history contests info
     # and next two coming contest, weekly and biweekly respectively.
@@ -95,7 +96,7 @@ async def contest_user_post(
         contest_name: str,
         username: Optional[str] = Form(None),
 ):
-    print(f"username={username}")
+    logger.info(f"username={username}")
     record = await ContestRecordPredict.find_one(
             ContestRecordPredict.contest_name == contest_name,
             ContestRecordPredict.username == username,

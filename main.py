@@ -1,10 +1,14 @@
 import asyncio
 
+from loguru import logger
+
 from app.core.schedulers import start_scheduler
 from app.db.mongodb import start_async_mongodb
+from app.utils import start_loguru
 
 
 async def start():
+    start_loguru()
     await start_async_mongodb()
     await start_scheduler()
 
@@ -14,7 +18,7 @@ async def start():
     # from app.core.predictor import predict_contest
     # await predict_contest(contest_name="weekly-contest-294")
 
-    print("finished start function in main.py")
+    logger.success("started all entry functions")
 
 
 if __name__ == "__main__":
@@ -24,4 +28,4 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except (KeyboardInterrupt, SystemExit):
-        pass
+        logger.critical("Existed.")

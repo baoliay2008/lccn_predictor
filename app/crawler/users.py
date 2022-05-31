@@ -1,6 +1,7 @@
 import asyncio
 from typing import List, Optional
 
+from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
@@ -15,13 +16,13 @@ async def multi_upsert_user(
     update_tasks = list()
     for response, contest_record in zip(graphql_response_list, multi_request_list):
         if response is None:
-            print(f"warning: contest_record={contest_record} user query response is None")
+            logger.info(f"warning: contest_record={contest_record} user query response is None")
             continue
         data = response.json().get("data", {}).get("userContestRanking")
         if data is None:
-            print(f"warning: contest_record={contest_record} user query data is None")
+            logger.info(f"warning: contest_record={contest_record} user query data is None")
             continue
-        print(contest_record, data)
+        logger.info(f"multi_upsert_user contest_record={contest_record}, data={data}")
         user = User(
             username=contest_record.username,
             user_slug=contest_record.user_slug,
@@ -125,10 +126,10 @@ async def update_users_from_a_contest(
             User.data_region == contest_record.data_region,
         ):
             # TODO, iterate ContestRecord and find User one by one is slow, aggregate two collections would be faster.
-            print(f"user in db already, won't update, {contest_record}")
+            logger.info(f"user in db already, won't update, {contest_record}")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
-            print(f"for loop run multi_request_list \n"
+            logger.info(f"for loop run multi_request_list \n"
                   f"cn_multi_request_list{cn_multi_request_list}\n"
                   f"us_multi_request_list{us_multi_request_list}")
             await asyncio.gather(
@@ -140,8 +141,8 @@ async def update_users_from_a_contest(
         elif contest_record.data_region == "US":
             us_multi_request_list.append(contest_record)
         else:
-            print(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
-    print(f"rest of run multi_request_list \n"
+            logger.info(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
+    logger.info(f"rest of run multi_request_list \n"
           f"cn_multi_request_list{cn_multi_request_list}\n"
           f"us_multi_request_list{us_multi_request_list}")
     await asyncio.gather(
