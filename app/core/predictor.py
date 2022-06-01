@@ -9,7 +9,6 @@ from beanie.odm.operators.update.general import Set
 from numba import jit
 
 from app.crawler.contests import save_predict_contest
-from app.crawler.users import update_users_from_a_contest
 from app.db.models import User, ContestRecordPredict
 
 
@@ -46,14 +45,13 @@ async def predict_contest(
         update_user_using_prediction: bool = False,
 ) -> None:
     """
-    core predict function using official contest rating algorithm.
+    Core predict function using official contest rating algorithm
     :param contest_name:
-    :param update_user_using_prediction: use for biweekly contest because next day's weekly contest needs the latest.
+    :param update_user_using_prediction: use for biweekly contest because next day's weekly contest needs the latest
     :return:
     """
     logger.info("start run predict_contest")
     await save_predict_contest(contest_name)
-    await update_users_from_a_contest(contest_name)
     records: List[ContestRecordPredict] = (
         await ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,

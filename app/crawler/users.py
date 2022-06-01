@@ -104,7 +104,7 @@ async def multi_request_user_us(
     us_multi_request_list.clear()
 
 
-async def update_users_from_a_contest(
+async def update_users_from_contest(
         contest_name: str,
         in_predict_col: bool = True,
         new_user_only: bool = True,

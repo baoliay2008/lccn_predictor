@@ -9,6 +9,7 @@ from app.utils import start_loguru
 
 async def start():
     start_loguru()
+
     await start_async_mongodb()
     await start_scheduler()
 

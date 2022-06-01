@@ -7,7 +7,7 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
-from app.crawler.users import update_users_from_a_contest
+from app.crawler.users import update_users_from_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
 from app.db.mongodb import get_async_mongodb_collection
@@ -63,6 +63,7 @@ async def save_predict_contest(
         _insert_one_if_not_exists(user_rank) for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
+    await update_users_from_contest(contest_name=contest_name)
 
 
 async def save_archive_contest(
@@ -91,6 +92,7 @@ async def save_archive_contest(
         for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
+    await update_users_from_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
 
 
 async def check_contest_user_num(
@@ -134,11 +136,9 @@ async def first_time_contest_crawler() -> None:
     for i in range(294, 100, -1):
         contest_name = f"weekly-contest-{i}"
         await save_archive_contest(contest_name=contest_name)
-        await update_users_from_a_contest(contest_name=contest_name, new_user_only=False, in_predict_col=False)
         await check_contest_user_num(contest_name=contest_name)
     for i in range(78, 0, -1):
         contest_name = f"biweekly-contest-{i}"
         await save_archive_contest(contest_name=contest_name)
-        await update_users_from_a_contest(contest_name=contest_name, new_user_only=False, in_predict_col=False)
         await check_contest_user_num(contest_name=contest_name)
 
