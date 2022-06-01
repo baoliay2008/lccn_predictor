@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from math import ceil
 import asyncio
 
@@ -9,21 +8,24 @@ from beanie.odm.operators.update.general import Set
 
 from app.crawler.users import update_users_from_contest
 from app.crawler.utils import multi_http_request
-from app.db.models import ContestRecordPredict, ContestRecordArchive, User
+from app.db.models import ContestRecordPredict, ContestRecordArchive, User, Submission
 from app.db.mongodb import get_async_mongodb_collection
+from app.utils import epoch_time_to_utc_datetime
 
 
 async def get_single_contest_ranking(
     contest_name: str,
-) -> List[Dict]:
+) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     req = httpx.get(
         f"https://leetcode.com/contest/api/ranking/{contest_name}/",
-        timeout=60
+        timeout=60,
     )
     data = req.json()
     user_num = data.get("user_num")
+    questions_list = data.get("questions")
     page_max = ceil(user_num / 25)
     user_rank_list = list()
+    nested_submission_list = list()
     url_list = [
         f"https://leetcode.com/contest/api/ranking/{contest_name}/?pagination={page}&region=global"
         for page in range(1, page_max + 1)
@@ -35,8 +37,59 @@ async def get_single_contest_ranking(
     for res in responses:
         if res is None:
             continue
-        user_rank_list.extend(res.json().get("total_rank"))
-    return user_rank_list
+        res_dict = res.json()
+        user_rank_list.extend(res_dict.get("total_rank"))
+        nested_submission_list.extend(res_dict.get("submissions"))
+    return user_rank_list, nested_submission_list, questions_list
+
+
+async def save_submission(
+    contest_name: str,
+) -> None:
+    """
+    TODO: change this function's parameters into [user_rank_list, nested_submission_list],
+    then this function could be called in save_predict_contest or save_archive_contest function
+    :param contest_name:
+    :return:
+    """
+    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
+    question_credit_mapper = {
+        question["question_id"]: question["credit"]
+        for question in questions_list
+    }
+    submission_objs = list()
+    for user_rank_dict, nested_submission_dict in zip(user_rank_list, nested_submission_list):
+        for k, value_dict in nested_submission_dict.items():
+            nested_submission_dict[k].pop("id")
+            nested_submission_dict[k] |= {
+                        "contest_name": contest_name,
+                        "username": user_rank_dict["username"],
+                        "date": epoch_time_to_utc_datetime(value_dict["date"]),
+                        "credit": question_credit_mapper[value_dict["question_id"]],
+                    }
+        submission_objs.extend(
+            [
+                Submission.parse_obj(value_dict)
+                for value_dict in nested_submission_dict.values()
+            ]
+        )
+    tasks = [
+        Submission.find_one(
+            Submission.contest_name == submission.contest_name,
+            Submission.username == submission.username,
+            Submission.data_region == submission.data_region,
+            Submission.question_id == submission.question_id,
+        ).upsert(
+            Set({
+                Submission.date: submission.date,
+                Submission.fail_count: submission.fail_count,
+                Submission.update_time: submission.update_time,
+            }),
+            on_insert=submission,
+        )
+        for submission in submission_objs
+    ]
+    await asyncio.gather(*tasks)
 
 
 async def save_predict_contest(
@@ -53,7 +106,7 @@ async def save_predict_contest(
             logger.info(f"doc found, won't insert. {doc}")
         else:
             await ContestRecordPredict.insert_one(_user_rank)
-    user_rank_list = await get_single_contest_ranking(contest_name)
+    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -69,7 +122,7 @@ async def save_predict_contest(
 async def save_archive_contest(
         contest_name: str,
 ) -> None:
-    user_rank_list = await get_single_contest_ranking(contest_name)
+    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})

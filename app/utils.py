@@ -1,10 +1,10 @@
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from loguru import logger
 
 
-def get_iso_time(epoch_time: int) -> str:
-    return datetime.fromtimestamp(epoch_time).isoformat()
+def epoch_time_to_utc_datetime(epoch_time: int) -> datetime:
+    return datetime.fromtimestamp(epoch_time).astimezone(timezone.utc)
 
 
 def start_loguru(process: str = "main"):

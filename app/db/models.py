@@ -13,6 +13,7 @@ class ContestRecord(Document):
     country_name: Optional[str] = None
     rank: Indexed(int)
     score: int
+    # TODO: change finish_time from int to indexed utc datetime using `epoch_time_to_utc_datetime`, the same as Submission.date
     finish_time: int
     data_region: Indexed(str)
 
@@ -53,5 +54,21 @@ class User(Document):
     # TODO: add historical ranking field, save into an array. (array.length = attendedContestsCount)
 
 
+class Submission(Document):
+    # these four can be used as compound Index
+    contest_name: Indexed(str)
+    username: Indexed(str)
+    data_region: Indexed(str)
+    question_id: Indexed(int)
+    # following three for sorting
+    date: Indexed(datetime)
+    fail_count: int
+    credit: int
+    # following three are useless now
+    submission_id: int
+    status: int
+    contest_id: int
+    # for tracking
+    update_time: datetime = Field(default_factory=datetime.utcnow)
 
 
