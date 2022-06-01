@@ -37,18 +37,22 @@
         <div class="container centered" style="margin-bottom:30px;">
             <div class="row">
                 <div class="col s1">
+                    {% if current_page %}
                     <a class="waves-effect waves-light btn-small black" href="/" style="display: flex; justify-content: center;">
+                    {% else %}
+                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
+                    {% endif %}
                         <i class="material-icons">arrow_back</i>
                     </a>
                 </div>
                 <div class="col s9 m10 l10" style="text-align: center; font-size: 1.5rem;">
                     {{' '.join(contest_name.split('-')) | title }}
                 </div>
-                <div class="col s1">
-                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}" style="display: flex; justify-content: center;">
-                        <i class="material-icons">refresh</i>
-                    </a>
-                </div>
+<!--                <div class="col s1">-->
+<!--                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">-->
+<!--                        <i class="material-icons">refresh</i>-->
+<!--                    </a>-->
+<!--                </div>-->
             </div>
         </div>
 
@@ -61,7 +65,7 @@
                         <label for="username">Username</label>
                     </div>
                     <div class="col s2 m2 l2">
-                        <button class="btn-small waves-effect waves-light black" type="submit" name="/{{contest_name}}" style="margin-top: 25px">
+                        <button class="btn-small waves-effect waves-light black" type="submit" style="margin-top: 25px">
                             <i class="material-icons">search</i>
                         </button>
                     </div>

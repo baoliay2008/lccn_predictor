@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.utils import start_loguru
 from app.db.models import ContestRecordPredict
 from app.db.mongodb import start_async_mongodb, get_async_mongodb_collection
 
@@ -19,13 +20,15 @@ templates = Jinja2Templates(directory="templates")
 
 @app.on_event("startup")
 async def startup_event():
+    start_loguru(process="api")
     await start_async_mongodb()
 
 
 @app.get("/", response_class=HTMLResponse)
-async def contest_page_get(
+async def index_page_get(
         request: Request,
 ):
+    logger.info(f"index_page_get request.client={request.client}")
     # Now beanie ODM doesn't have a distinct method, use raw mongodb query here.
     # https://github.com/roman-right/beanie/issues/133
     # https://github.com/roman-right/beanie/pull/268
@@ -53,13 +56,13 @@ async def contest_page_get(
     )
 
 
-@app.get("/{contest_name}", response_class=HTMLResponse)
 @app.get("/{contest_name}/{page}", response_class=HTMLResponse)
 async def contest_page_get(
         request: Request,
         contest_name: str,
         page: int = 1,
 ):
+    logger.info(f"contest_page_get request.client={request.client} contest_name={contest_name}, page={page}")
     # TODO: check contest_name, notify invalid contest_name(eg. not started with weekly or biweekly)
     total_num = await ContestRecordPredict.find(
         ContestRecordPredict.contest_name == contest_name,
@@ -96,7 +99,7 @@ async def contest_user_post(
         contest_name: str,
         username: Optional[str] = Form(None),
 ):
-    logger.info(f"username={username}")
+    logger.info(f"contest_user_post request.client={request.client} contest_name={contest_name}, username={username}")
     record = await ContestRecordPredict.find_one(
             ContestRecordPredict.contest_name == contest_name,
             ContestRecordPredict.username == username,

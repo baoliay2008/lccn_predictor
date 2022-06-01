@@ -1,7 +1,12 @@
 loguru:
-  sink: './log/lccn_predictor_main.log'
-  level: INFO
-  rotation: 'saturday at 12:00'
+  main:
+    sink: './log/lccn_predictor_main.log'
+    level: INFO
+    rotation: 'saturday at 12:00'
+  api:
+    sink: './log/api/lccn_predictor_api.log'
+    level: INFO
+    rotation: '00:00'
 mongodb:
   ip: 127.0.0.1
   port: 27017
