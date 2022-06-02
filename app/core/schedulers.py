@@ -1,4 +1,3 @@
-import math
 import asyncio
 from datetime import datetime
 
@@ -9,12 +8,7 @@ from app.constant import WEEKLY_CONTEST_END, BIWEEKLY_CONTEST_END, \
     WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE, CronTimePointWkdHrMin
 from app.core.predictor import predict_contest
 from app.crawler.contests import save_archive_contest
-
-
-def get_passed_weeks(t: datetime, base_t: datetime) -> int:
-    return math.floor(
-        (t - base_t).total_seconds() / (7 * 24 * 60 * 60)
-    )
+from app.utils import get_passed_weeks
 
 
 async def update_last_two_contests() -> None:

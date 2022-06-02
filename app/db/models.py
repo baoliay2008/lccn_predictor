@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from beanie import Document, Indexed
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class ContestRecord(Document):
@@ -33,6 +33,7 @@ class ContestRecordArchive(ContestRecord):
     # Archived records will be updated.
     # Leetcode will rejudge some submissions(cheat detection, add test cases, etc.)
     update_time: datetime = Field(default_factory=datetime.utcnow)
+    real_time_rank: Optional[list] = None
 
 
 class User(Document):
@@ -70,5 +71,10 @@ class Submission(Document):
     contest_id: int
     # for tracking
     update_time: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ProjectionUniqueUser(BaseModel):
+    username: str
+    data_region: str
 
 

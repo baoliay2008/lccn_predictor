@@ -44,15 +44,11 @@ async def get_single_contest_ranking(
 
 
 async def save_submission(
-    contest_name: str,
+        contest_name: str,
+        user_rank_list: List[Dict],
+        nested_submission_list: List[Dict],
+        questions_list: List[Dict],
 ) -> None:
-    """
-    TODO: change this function's parameters into [user_rank_list, nested_submission_list],
-    then this function could be called in save_predict_contest or save_archive_contest function
-    :param contest_name:
-    :return:
-    """
-    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
     question_credit_mapper = {
         question["question_id"]: question["credit"]
         for question in questions_list
@@ -146,6 +142,9 @@ async def save_archive_contest(
     )
     await asyncio.gather(*tasks)
     await update_users_from_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+    await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
+    from app.core.rank import save_real_time_rank
+    await save_real_time_rank(contest_name)
 
 
 async def check_contest_user_num(
@@ -159,7 +158,7 @@ async def check_contest_user_num(
     user_num = data.get("user_num")
     archive_num = await ContestRecordArchive.find(ContestRecordArchive.contest_name == contest_name).count()
     predict_num = await ContestRecordPredict.find(ContestRecordPredict.contest_name == contest_name).count()
-    logger.info(f"check_contest_user_num {contest_name}. total {user_num}, archive {archive_num}, predict {predict_num}")
+    logger.info(f"{contest_name}: total={user_num} archive={archive_num} predict={predict_num}")
     logger.info(f"archive get all records? {user_num == archive_num}")
     logger.info(f"predict get all records? {user_num == predict_num}")
     # join table query how many of the users of this contest have been inserted in User collection
@@ -194,4 +193,3 @@ async def first_time_contest_crawler() -> None:
         contest_name = f"biweekly-contest-{i}"
         await save_archive_contest(contest_name=contest_name)
         await check_contest_user_num(contest_name=contest_name)
-
