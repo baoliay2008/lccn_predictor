@@ -113,10 +113,12 @@ async def update_users_from_contest(
     if in_predict_col:
         to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
+            batch_size=10,
         )
     else:
         to_be_queried = ContestRecordArchive.find(
             ContestRecordArchive.contest_name == contest_name,
+            batch_size=10,
         )
     cn_multi_request_list = list()
     us_multi_request_list = list()

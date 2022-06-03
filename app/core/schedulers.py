@@ -70,7 +70,7 @@ async def scheduler_entry() -> None:
         # do other low-priority jobs such as updating user's rating and participated contest count.
         await update_last_two_contests()
     else:
-        logger.debug(f"job_dispatcher nothing to do for utc={utc} time_point={time_point}")
+        logger.trace(f"job_dispatcher nothing to do for utc={utc} time_point={time_point}")
 
 
 async def start_scheduler() -> None:
