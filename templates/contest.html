@@ -2,9 +2,9 @@
 <html>
 
 <head>
-    <link rel="shortcut icon" href="{{url_for('static', path='/increase-32px.png')}}" type="image/png" />
+    <link rel="shortcut icon" href="{{url_for('static', path='/images/increase-32px.png')}}" type="image/png" />
 
-    <link rel="stylesheet" href="{{url_for('static', path='/styles.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', path='/css/styles.css')}}">
 
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -42,7 +42,7 @@
                     {% if current_page %}
                     <a class="waves-effect waves-light btn-small black" href="/" style="display: flex; justify-content: center;">
                     {% else %}
-                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
+                    <a class="waves-effect waves-light btn-small black pulse" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
                     {% endif %}
                         <i class="material-icons">arrow_back</i>
                     </a>
@@ -75,6 +75,8 @@
             </form>
         </div>
 
+        <div class="container" id="main" style="width: 90em; height:20em;"></div>
+
         <table class="container highlight centered responsive-table">
             <thead>
                 <tr class="card-panel blue lighten-2">
@@ -84,6 +86,7 @@
                     <th>Old Rating</th>
                     <th>New Rating</th>
                     <th>Delta</th>
+                    <th>Plot</th>
                 </tr>
             </thead>
 
@@ -110,6 +113,13 @@
                         {{user.delta_rating | round(2)}}
                     </td>
                     {% endif %}
+                    <td>
+                        <div class='rankListClick btn-small blue lighten-2 trigger_popup_fricc'
+                             contest_name="{{user.contest_name}}"
+                             username="{{user.username}}"
+                             data_region="{{user.data_region}}"> Trend
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -190,7 +200,14 @@
     </footer>
 </body>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <!--    <script async defer src="https://buttons.github.io/buttons.js"></script>-->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.3.2/echarts.min.js" integrity="sha512-weWXHm0Ws2cZKjjwugRMnnOAx9uCP/wUVf84W7/fXQimwYUK28zPDGPprDozomQLpKv6U99xN9PI9+yLI9qxNw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <script src="{{url_for('static', path='/js/user-rank-plot.js')}}" type="module" ></script>
 
 </html>

@@ -20,14 +20,14 @@ async def update_last_two_contests() -> None:
     utc = datetime.utcnow()
     weekly_passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.datetime)
     last_weekly_contest_name = f"weekly-contest-{weekly_passed_weeks + WEEKLY_CONTEST_BASE.num}"
-    logger.info(f"last_weekly_contest_name={last_weekly_contest_name} update users")
+    logger.info(f"last_weekly_contest_name={last_weekly_contest_name} update archive contests")
     await save_archive_contest(contest_name=last_weekly_contest_name)
     biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.datetime)
     if biweekly_passed_weeks % 2 != 0:
         logger.info(f"will not update last biweekly users, passed_weeks={biweekly_passed_weeks} is odd for now={utc}")
         return
     last_biweekly_contest_name = f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
-    logger.info(f"last_biweekly_contest_name={last_biweekly_contest_name} update users")
+    logger.info(f"last_biweekly_contest_name={last_biweekly_contest_name} update archive contests")
     await save_archive_contest(contest_name=last_biweekly_contest_name)
     logger.info("finished update_last_two_contests_users")
 
