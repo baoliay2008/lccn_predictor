@@ -7,11 +7,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.constant import WEEKLY_CONTEST_END, BIWEEKLY_CONTEST_END, \
     WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE, CronTimePointWkdHrMin
 from app.core.predictor import predict_contest
-from app.crawler.contests import save_archive_contest
+from app.crawler.contest import save_all_contests
+from app.crawler.contest_records import save_archive_contest_records
 from app.utils import get_passed_weeks
 
 
-async def update_last_two_contests() -> None:
+async def save_last_two_contest_records() -> None:
     """
     update last weekly contest, and biweekly contest if exists.
     upsert contest records in ContestRecordArchive, its users will be also updated in the save_archive_contest function.
@@ -21,14 +22,14 @@ async def update_last_two_contests() -> None:
     weekly_passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.datetime)
     last_weekly_contest_name = f"weekly-contest-{weekly_passed_weeks + WEEKLY_CONTEST_BASE.num}"
     logger.info(f"last_weekly_contest_name={last_weekly_contest_name} update archive contests")
-    await save_archive_contest(contest_name=last_weekly_contest_name)
+    await save_archive_contest_records(contest_name=last_weekly_contest_name)
     biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.datetime)
     if biweekly_passed_weeks % 2 != 0:
         logger.info(f"will not update last biweekly users, passed_weeks={biweekly_passed_weeks} is odd for now={utc}")
         return
     last_biweekly_contest_name = f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
     logger.info(f"last_biweekly_contest_name={last_biweekly_contest_name} update archive contests")
-    await save_archive_contest(contest_name=last_biweekly_contest_name)
+    await save_archive_contest_records(contest_name=last_biweekly_contest_name)
     logger.info("finished update_last_two_contests_users")
 
 
@@ -68,7 +69,8 @@ async def scheduler_entry() -> None:
             and time_point.minute == 0
     ):
         # do other low-priority jobs such as updating user's rating and participated contest count.
-        await update_last_two_contests()
+        await save_all_contests()
+        await save_last_two_contest_records()
     else:
         logger.trace(f"job_dispatcher nothing to do for utc={utc} time_point={time_point}")
 

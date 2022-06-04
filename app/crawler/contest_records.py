@@ -6,14 +6,15 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
-from app.crawler.users import update_users_from_contest
+from app.crawler.contest import fill_questions_field
+from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User, Submission
 from app.db.mongodb import get_async_mongodb_collection
 from app.utils import epoch_time_to_utc_datetime
 
 
-async def get_single_contest_ranking(
+async def request_contest_ranking(
     contest_name: str,
 ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     req = httpx.get(
@@ -88,7 +89,7 @@ async def save_submission(
     await asyncio.gather(*tasks)
 
 
-async def save_predict_contest(
+async def save_predict_contest_records(
     contest_name: str,
 ) -> None:
     async def _insert_one_if_not_exists(_user_rank):
@@ -102,7 +103,7 @@ async def save_predict_contest(
             logger.info(f"doc found, won't insert. {doc}")
         else:
             await ContestRecordPredict.insert_one(_user_rank)
-    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
+    user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -112,13 +113,14 @@ async def save_predict_contest(
         _insert_one_if_not_exists(user_rank) for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
-    await update_users_from_contest(contest_name=contest_name)
+    await save_users_of_contest(contest_name=contest_name)
+    await fill_questions_field(contest_name, questions_list)
 
 
-async def save_archive_contest(
+async def save_archive_contest_records(
         contest_name: str,
 ) -> None:
-    user_rank_list, nested_submission_list, questions_list = await get_single_contest_ranking(contest_name)
+    user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -141,7 +143,8 @@ async def save_archive_contest(
         for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
-    await update_users_from_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+    await save_users_of_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+    await fill_questions_field(contest_name, questions_list)
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
     from app.core.rank import save_real_time_rank
     await save_real_time_rank(contest_name)
@@ -187,9 +190,9 @@ async def check_contest_user_num(
 async def first_time_contest_crawler() -> None:
     for i in range(294, 100, -1):
         contest_name = f"weekly-contest-{i}"
-        await save_archive_contest(contest_name=contest_name)
+        await save_archive_contest_records(contest_name=contest_name)
         await check_contest_user_num(contest_name=contest_name)
     for i in range(78, 0, -1):
         contest_name = f"biweekly-contest-{i}"
-        await save_archive_contest(contest_name=contest_name)
+        await save_archive_contest_records(contest_name=contest_name)
         await check_contest_user_num(contest_name=contest_name)

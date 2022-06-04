@@ -1,7 +1,27 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from beanie import Document, Indexed
 from pydantic import BaseModel, Field
+
+
+class Question(BaseModel):
+    question_id: int
+    credit: int
+    title: str
+    title_slug: str
+
+
+class Contest(Document):
+    contest_name: Indexed(str, unique=True)  # titleSlug
+    title: Indexed(str)
+    start_time: Indexed(datetime)
+    duration: int
+    questions: Optional[List[Question]] = None
+    # computed field
+    end_time: Indexed(datetime)
+    # for tracking
+    past: bool
+    update_time: datetime = Field(default_factory=datetime.utcnow)
 
 
 class ContestRecord(Document):
@@ -52,7 +72,7 @@ class User(Document):
     # localRanking: Optional[int] = None  # CN users only
     # globalTotalParticipants: Optional[int] = None  # CN users only
     # localTotalParticipants: Optional[int] = None  # CN users only
-    # TODO: add historical ranking field, save into an array. (array.length = attendedContestsCount)
+    # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
 
 
 class Submission(Document):

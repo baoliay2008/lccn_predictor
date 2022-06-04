@@ -8,7 +8,7 @@ import numpy as np
 from beanie.odm.operators.update.general import Set
 from numba import jit
 
-from app.crawler.contests import save_predict_contest
+from app.crawler.contest_records import save_predict_contest_records
 from app.db.models import User, ContestRecordPredict
 
 
@@ -51,7 +51,7 @@ async def predict_contest(
     :return:
     """
     logger.info("start run predict_contest")
-    await save_predict_contest(contest_name)
+    await save_predict_contest_records(contest_name)
     records: List[ContestRecordPredict] = (
         await ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,

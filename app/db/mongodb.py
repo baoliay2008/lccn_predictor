@@ -9,7 +9,7 @@ from motor.core import AgnosticClient, AgnosticCollection, AgnosticDatabase  # b
 from beanie import init_beanie
 
 from app.config import get_yaml_config
-from app.db.models import ContestRecordPredict, ContestRecordArchive, User, Submission
+from app.db.models import Contest, ContestRecordPredict, ContestRecordArchive, User, Submission
 
 async_mongodb_client = None
 
@@ -51,6 +51,7 @@ async def start_async_mongodb() -> None:
     await init_beanie(
         database=async_mongodb_database,
         document_models=[
+            Contest,
             ContestRecordPredict,
             ContestRecordArchive,
             User,

@@ -129,7 +129,7 @@ async def contest_user_rank_list(
         contest_record: ContestRecord,
 ):
     logger.info(f"request.client={request.client}")
-    record = await ContestRecordArchive.find_one(
+    record: ContestRecordArchive = await ContestRecordArchive.find_one(
         ContestRecordArchive.contest_name == contest_record.contest_name,
         ContestRecordArchive.username == contest_record.username,
         ContestRecordArchive.data_region == contest_record.data_region,
@@ -137,7 +137,7 @@ async def contest_user_rank_list(
     data = [
         ["Minute", "Rank"],
     ] + [
-        [i, x] for i, x in enumerate(record.real_time_rank)
+        [i, x] for i, x in enumerate(record.real_time_rank or [])
     ]
     logger.info(f"user={contest_record} data={data}")
     return {
