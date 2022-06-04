@@ -11,6 +11,7 @@ class Question(BaseModel):
     credit: int
     title: str
     title_slug: str
+    real_time_count: Optional[list] = None
 
 
 class Contest(Document):
@@ -27,8 +28,10 @@ class Contest(Document):
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
+        elif isinstance(v, datetime):
+            return v
         else:
-            raise TypeError(f"startTime={v} is not int")
+            raise TypeError(f"startTime={v} is not int or datetime")
 
 
 class ContestRecord(Document):
@@ -47,8 +50,10 @@ class ContestRecord(Document):
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
+        elif isinstance(v, datetime):
+            return v
         else:
-            raise TypeError(f"finish_time={v} is not int")
+            raise TypeError(f"finish_time={v} is not int or datetime")
 
 
 class ContestRecordPredict(ContestRecord):
@@ -97,8 +102,10 @@ class Submission(Document):
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
+        elif isinstance(v, datetime):
+            return v
         else:
-            raise TypeError(f"date={v} is not int")
+            raise TypeError(f"date={v} is not int or datetime")
 
 
 class KeyUniqueContestRecord(BaseModel):

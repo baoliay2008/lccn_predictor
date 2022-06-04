@@ -1,20 +1,87 @@
 from datetime import datetime, timedelta
 import asyncio
 import math
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser
+from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
 from app.utils import epoch_time_to_utc_datetime, get_contest_end_time
+
+
+async def aggregate_question_real_time_count(
+        contest_name: str,
+        question_id: int,
+        time_point: datetime,
+) -> int:
+    col = get_async_mongodb_collection(Submission.__name__)
+    res = [
+        x async for x in col.aggregate(
+            [
+                {
+                    "$match": {
+                        "contest_name": contest_name,
+                        "question_id": question_id,
+                    }
+                },
+                {
+                    "$addFields": {
+                        "penalty_date": {
+                            "$dateAdd": {
+                                "startDate": "$date",
+                                "unit": "minute",
+                                "amount": {"$multiply": [5, "$fail_count"]}
+                            }
+                        }
+                    }
+                },
+                {
+                    "$match": {
+                        "penalty_date": {"$lte": time_point}
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": None,
+                        "finished_count": {"$sum": 1},
+                    }
+                }
+            ]
+        )
+    ]
+    return res[0].get("finished_count") if res else 0
+
+
+async def save_question_finish_count(
+        contest_name: str,
+        delta_minutes: int = 1
+) -> None:
+    contest: Contest = await Contest.find_one(
+        Contest.titleSlug == contest_name,
+    )
+    time_series = list()
+    end_time = get_contest_end_time(contest_name)
+    start_time = end_time - timedelta(minutes=90)
+    while start_time <= end_time:
+        time_series.append(start_time)
+        start_time += timedelta(minutes=delta_minutes)
+    logger.info(f"contest_name={contest_name} time_series={time_series}")
+    for question in contest.questions:
+        question.real_time_count = await asyncio.gather(
+            *[
+                aggregate_question_real_time_count(contest_name, question.question_id, time_point)
+                for time_point in time_series
+            ]
+        )
+    await contest.save()
 
 
 async def aggregate_rank_at_time_point(
     contest_name: str,
     time_point: datetime,
-):
+) -> Tuple[Dict[Tuple[str, str], int], int]:
     col = get_async_mongodb_collection(Submission.__name__)
     rank_map = dict()
     last_credit_sum = math.inf
@@ -65,7 +132,7 @@ async def aggregate_rank_at_time_point(
 async def save_real_time_rank(
     contest_name: str,
     delta_minutes: int = 1,
-):
+) -> None:
     logger.info(f"started running real_time_rank update function")
     users: List[ProjectionUniqueUser] = (
         await ContestRecordArchive.find(
