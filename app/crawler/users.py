@@ -127,7 +127,7 @@ async def save_users_of_contest(
             User.username == contest_record.username,
             User.data_region == contest_record.data_region,
         ):
-            # TODO, iterate ContestRecord and find User one by one is slow, aggregate two collections would be faster.
+            # TODO, iterate ContestRecord and find User one by one is slow, $lookup would be faster.
             logger.info(f"user in db already, won't update, {contest_record}")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
@@ -143,7 +143,7 @@ async def save_users_of_contest(
         elif contest_record.data_region == "US":
             us_multi_request_list.append(contest_record)
         else:
-            logger.info(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
+            logger.critical(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
     logger.info(f"rest of run multi_request_list \n"
           f"cn_multi_request_list{cn_multi_request_list}\n"
           f"us_multi_request_list{us_multi_request_list}")

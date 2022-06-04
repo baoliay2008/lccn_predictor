@@ -6,12 +6,12 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
+from app.core.rank import save_submission
 from app.crawler.contest import fill_questions_field
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
-from app.db.models import ContestRecordPredict, ContestRecordArchive, User, Submission
+from app.db.models import ContestRecordPredict, ContestRecordArchive, User
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import epoch_time_to_utc_datetime
 
 
 async def request_contest_ranking(
@@ -44,51 +44,6 @@ async def request_contest_ranking(
     return user_rank_list, nested_submission_list, questions_list
 
 
-async def save_submission(
-        contest_name: str,
-        user_rank_list: List[Dict],
-        nested_submission_list: List[Dict],
-        questions_list: List[Dict],
-) -> None:
-    question_credit_mapper = {
-        question["question_id"]: question["credit"]
-        for question in questions_list
-    }
-    submission_objs = list()
-    for user_rank_dict, nested_submission_dict in zip(user_rank_list, nested_submission_list):
-        for k, value_dict in nested_submission_dict.items():
-            nested_submission_dict[k].pop("id")
-            nested_submission_dict[k] |= {
-                        "contest_name": contest_name,
-                        "username": user_rank_dict["username"],
-                        "date": epoch_time_to_utc_datetime(value_dict["date"]),
-                        "credit": question_credit_mapper[value_dict["question_id"]],
-                    }
-        submission_objs.extend(
-            [
-                Submission.parse_obj(value_dict)
-                for value_dict in nested_submission_dict.values()
-            ]
-        )
-    tasks = [
-        Submission.find_one(
-            Submission.contest_name == submission.contest_name,
-            Submission.username == submission.username,
-            Submission.data_region == submission.data_region,
-            Submission.question_id == submission.question_id,
-        ).upsert(
-            Set({
-                Submission.date: submission.date,
-                Submission.fail_count: submission.fail_count,
-                Submission.update_time: submission.update_time,
-            }),
-            on_insert=submission,
-        )
-        for submission in submission_objs
-    ]
-    await asyncio.gather(*tasks)
-
-
 async def save_predict_contest_records(
     contest_name: str,
 ) -> None:
@@ -103,7 +58,7 @@ async def save_predict_contest_records(
             logger.info(f"doc found, won't insert. {doc}")
         else:
             await ContestRecordPredict.insert_one(_user_rank)
-    user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
+    user_rank_list, _, _ = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -114,11 +69,11 @@ async def save_predict_contest_records(
     )
     await asyncio.gather(*tasks)
     await save_users_of_contest(contest_name=contest_name)
-    await fill_questions_field(contest_name, questions_list)
 
 
 async def save_archive_contest_records(
         contest_name: str,
+        save_users: bool = True,
 ) -> None:
     user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
     user_rank_objs = list()
@@ -143,11 +98,12 @@ async def save_archive_contest_records(
         for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
-    await save_users_of_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+    if save_users is True:
+        await save_users_of_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+    else:
+        logger.info(f"save_users={save_users}, will not save users")
     await fill_questions_field(contest_name, questions_list)
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
-    from app.core.rank import save_real_time_rank
-    await save_real_time_rank(contest_name)
 
 
 async def check_contest_user_num(

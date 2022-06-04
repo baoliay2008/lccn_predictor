@@ -30,7 +30,7 @@ async def save_last_two_contest_records() -> None:
     last_biweekly_contest_name = f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
     logger.info(f"last_biweekly_contest_name={last_biweekly_contest_name} update archive contests")
     await save_archive_contest_records(contest_name=last_biweekly_contest_name)
-    logger.info("finished update_last_two_contests_users")
+    logger.success("finished update_last_two_contests_users")
 
 
 async def predict_biweekly_contest() -> None:
@@ -43,7 +43,8 @@ async def predict_biweekly_contest() -> None:
     logger.info(f"biweekly contest prediction running, contest_name={contest_name}")
     await asyncio.sleep(15)
     await predict_contest(contest_name=contest_name, update_user_using_prediction=True)
-    logger.info("finished predict_biweekly_contest")
+    await save_archive_contest_records(contest_name=contest_name, save_users=False)
+    logger.success("finished predict_biweekly_contest")
 
 
 async def predict_weekly_contest() -> None:
@@ -53,7 +54,8 @@ async def predict_weekly_contest() -> None:
     logger.info(f"weekly contest prediction running, contest_name={contest_name}")
     await asyncio.sleep(15)
     await predict_contest(contest_name=contest_name)
-    logger.info("finished predict_weekly_contest")
+    await save_archive_contest_records(contest_name=contest_name, save_users=False)
+    logger.success("finished predict_weekly_contest")
 
 
 async def scheduler_entry() -> None:
@@ -77,9 +79,6 @@ async def scheduler_entry() -> None:
 
 async def start_scheduler() -> None:
     scheduler = AsyncIOScheduler()
-    # 10 seconds is OK, make sure scheduler_entry will be executed in every minute.
-    # no need to worry about duplicated run, prediction function cannot finish with 10 seconds, rest will be skipped.
-    # By default, only one instance of each job is allowed to be run at the same time.
     scheduler.add_job(scheduler_entry, 'interval', seconds=10)
     scheduler.start()
     logger.success("started schedulers")
