@@ -126,7 +126,6 @@ async def save_submission(
             nested_submission_dict[k] |= {
                         "contest_name": contest_name,
                         "username": user_rank_dict["username"],
-                        "date": epoch_time_to_utc_datetime(value_dict["date"]),
                         "credit": question_credit_mapper[value_dict["question_id"]],
                     }
         submission_objs.extend(

@@ -11,7 +11,6 @@ from app.crawler.contest import fill_questions_field
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
-from app.db.mongodb import get_async_mongodb_collection
 
 
 async def request_contest_ranking(
@@ -104,51 +103,3 @@ async def save_archive_contest_records(
         logger.info(f"save_users={save_users}, will not save users")
     await fill_questions_field(contest_name, questions_list)
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
-
-
-async def check_contest_user_num(
-    contest_name: str,
-) -> None:
-    req = httpx.get(
-        f"https://leetcode.com/contest/api/ranking/{contest_name}/",
-        timeout=60,
-    )
-    data = req.json()
-    user_num = data.get("user_num")
-    archive_num = await ContestRecordArchive.find(ContestRecordArchive.contest_name == contest_name).count()
-    predict_num = await ContestRecordPredict.find(ContestRecordPredict.contest_name == contest_name).count()
-    logger.info(f"{contest_name}: total={user_num} archive={archive_num} predict={predict_num}")
-    logger.info(f"archive get all records? {user_num == archive_num}")
-    logger.info(f"predict get all records? {user_num == predict_num}")
-    # join table query how many of the users of this contest have been inserted in User collection
-    # for convenience, here use pymongo aggregate directly, not beanie ODM(poor aggregate $lookup support now).
-    col = get_async_mongodb_collection(ContestRecordPredict.__name__)
-    res = [
-        x async for x in col.aggregate(
-            [
-                {"$match": {"contest_name": contest_name}},
-                {"$lookup": {
-                    "from": User.__name__,
-                    "localField": "username",
-                    "foreignField": "username",
-                    "as": "found_user"
-                }},
-                {"$addFields": {"found_user_count": {"$size": "$found_user"}}},
-                {"$group": {"_id": "_id", "count": {"$sum": "$found_user_count"}}}
-            ]
-        )
-    ]
-    saved_user_num = res[0].get("count") if res else 0
-    logger.info(f"User db saved_user_num={saved_user_num}")
-    logger.info(f"all users now in User db? {user_num == saved_user_num}")
-
-
-async def first_time_contest_crawler() -> None:
-    for i in range(294, 100, -1):
-        contest_name = f"weekly-contest-{i}"
-        await save_archive_contest_records(contest_name=contest_name)
-        await check_contest_user_num(contest_name=contest_name)
-    for i in range(78, 0, -1):
-        contest_name = f"biweekly-contest-{i}"
-        await save_archive_contest_records(contest_name=contest_name)
-        await check_contest_user_num(contest_name=contest_name)

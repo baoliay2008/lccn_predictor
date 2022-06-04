@@ -1,16 +1,15 @@
 import math
-from typing import List, Tuple, Optional
+from typing import Optional
 import asyncio
 
 from loguru import logger
-from pydantic import BaseModel
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.utils import start_loguru
-from app.db.models import ContestRecordPredict, ContestRecordArchive
+from app.db.models import ContestRecordPredict, ContestRecordArchive, KeyUniqueContestRecord
 from app.db.mongodb import start_async_mongodb, get_async_mongodb_collection
 
 
@@ -117,29 +116,23 @@ async def contest_user_post(
     )
 
 
-class ContestRecord(BaseModel):
-    contest_name: str
-    username: str
-    data_region: str
-
-
 @app.post("/user_rank_list")
 async def contest_user_rank_list(
         request: Request,
-        contest_record: ContestRecord,
+        unique_contest_record: KeyUniqueContestRecord,
 ):
     logger.info(f"request.client={request.client}")
     record: ContestRecordArchive = await ContestRecordArchive.find_one(
-        ContestRecordArchive.contest_name == contest_record.contest_name,
-        ContestRecordArchive.username == contest_record.username,
-        ContestRecordArchive.data_region == contest_record.data_region,
+        ContestRecordArchive.contest_name == unique_contest_record.contest_name,
+        ContestRecordArchive.username == unique_contest_record.username,
+        ContestRecordArchive.data_region == unique_contest_record.data_region,
         )
     data = [
         ["Minute", "Rank"],
     ] + [
         [i, x] for i, x in enumerate(record.real_time_rank or [])
     ]
-    logger.info(f"user={contest_record} data={data}")
+    logger.info(f"user={unique_contest_record} data={data}")
     return {
         "real_time_rank": data
     }

@@ -1,7 +1,9 @@
 from typing import Optional, List
 from datetime import datetime
 from beanie import Document, Indexed
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+
+from app.utils import epoch_time_to_utc_datetime
 
 
 class Question(BaseModel):
@@ -12,16 +14,21 @@ class Question(BaseModel):
 
 
 class Contest(Document):
-    contest_name: Indexed(str, unique=True)  # titleSlug
+    titleSlug: Indexed(str, unique=True)
     title: Indexed(str)
-    start_time: Indexed(datetime)
+    startTime: Indexed(datetime)
     duration: int
-    questions: Optional[List[Question]] = None
-    # computed field
-    end_time: Indexed(datetime)
-    # for tracking
+    endTime: Indexed(datetime)
     past: bool
+    questions: Optional[List[Question]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
+
+    @validator('startTime', 'endTime', pre=True)
+    def epoch_to_utc(cls, v):
+        if isinstance(v, int):
+            return epoch_time_to_utc_datetime(v)
+        else:
+            raise TypeError(f"startTime={v} is not int")
 
 
 class ContestRecord(Document):
@@ -33,9 +40,15 @@ class ContestRecord(Document):
     country_name: Optional[str] = None
     rank: Indexed(int)
     score: int
-    # TODO: change finish_time from int to indexed utc datetime using `epoch_time_to_utc_datetime`, the same as Submission.date
-    finish_time: int
+    finish_time: datetime
     data_region: Indexed(str)
+
+    @validator('finish_time', pre=True)
+    def epoch_to_utc(cls, v):
+        if isinstance(v, int):
+            return epoch_time_to_utc_datetime(v)
+        else:
+            raise TypeError(f"finish_time={v} is not int")
 
 
 class ContestRecordPredict(ContestRecord):
@@ -57,21 +70,12 @@ class ContestRecordArchive(ContestRecord):
 
 
 class User(Document):
-    # save latest value
     username: Indexed(str)
     user_slug: Indexed(str)
     data_region: Indexed(str)
-    update_time: datetime = Field(default_factory=datetime.utcnow)
-    # following fields come from graphql
     attendedContestsCount: int
     rating: float
-    # removed the following six fields, they are useless, no need to save them now.(fields removed in graphql also)
-    # globalRanking: int
-    # topPercentage: float
-    # totalParticipants:  Optional[int] = None  # US users only
-    # localRanking: Optional[int] = None  # CN users only
-    # globalTotalParticipants: Optional[int] = None  # CN users only
-    # localTotalParticipants: Optional[int] = None  # CN users only
+    update_time: datetime = Field(default_factory=datetime.utcnow)
     # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
 
 
@@ -81,16 +85,26 @@ class Submission(Document):
     username: Indexed(str)
     data_region: Indexed(str)
     question_id: Indexed(int)
-    # following three for sorting
     date: Indexed(datetime)
     fail_count: int
     credit: int
-    # following three are useless now
     submission_id: int
     status: int
     contest_id: int
-    # for tracking
     update_time: datetime = Field(default_factory=datetime.utcnow)
+
+    @validator('date', pre=True)
+    def epoch_to_utc(cls, v):
+        if isinstance(v, int):
+            return epoch_time_to_utc_datetime(v)
+        else:
+            raise TypeError(f"date={v} is not int")
+
+
+class KeyUniqueContestRecord(BaseModel):
+    contest_name: str
+    username: str
+    data_region: str
 
 
 class ProjectionUniqueUser(BaseModel):

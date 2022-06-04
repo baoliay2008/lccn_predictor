@@ -1,6 +1,5 @@
 import asyncio
 import re
-from datetime import timedelta
 from typing import List, Dict
 
 import httpx
@@ -9,7 +8,6 @@ from loguru import logger
 
 from app.crawler.utils import multi_http_request
 from app.db.models import Contest, Question
-from app.utils import epoch_time_to_utc_datetime
 
 
 async def multi_upsert_contests(
@@ -19,14 +17,8 @@ async def multi_upsert_contests(
     tasks = list()
     for contest_dict in contests:
         try:
-            contest_dict["start_time"] = epoch_time_to_utc_datetime(
-                contest_dict["startTime"]
-            )
-            contest_dict["contest_name"] = contest_dict["titleSlug"]
-            contest_dict["past"] = True
-            contest_dict["end_time"] = contest_dict["start_time"] + timedelta(
-                seconds=contest_dict["duration"]
-            )
+            contest_dict["past"] = past
+            contest_dict["endTime"] = contest_dict["startTime"] + contest_dict["duration"]
             logger.info(f"contest_dict = {contest_dict}")
             contest = Contest.parse_obj(contest_dict)
             logger.info(contest)
@@ -34,17 +26,17 @@ async def multi_upsert_contests(
             logger.error(f"parse contest_dict error {e}. skip upsert {contest_dict}")
             continue
         tasks.append(
-            Contest.find_one(Contest.contest_name == contest.contest_name,).upsert(
-                Set(
-                    {
+            Contest.find_one(
+                Contest.titleSlug == contest.titleSlug,
+            ).upsert(
+                Set({
                         Contest.update_time: contest.update_time,
                         Contest.title: contest.title,
-                        Contest.start_time: contest.start_time,
+                        Contest.startTime: contest.startTime,
                         Contest.duration: contest.duration,
                         Contest.past: past,
-                        Contest.end_time: contest.end_time,
-                    }
-                ),
+                        Contest.endTime: contest.endTime,
+                    }),
                 on_insert=contest,
             )
         )
@@ -135,7 +127,9 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
         question_objs = list()
         for question in questions:
             question_objs.append(Question.parse_obj(question))
-        await Contest.find_one(Contest.contest_name == contest_name,).update(
+        await Contest.find_one(
+            Contest.titleSlug == contest_name,
+        ).update(
             Set(
                 {
                     Contest.questions: question_objs,
