@@ -79,22 +79,18 @@ async def predict_contest(
         # + 1 - 0.5 = + 0.5 works because including i=j is more convenient, can reuse expected_win_rate function below.
         expected_rank = np.sum(expected_win_rate(rating_array, rating_array[i])) + 0.5
         mean_rank = np.sqrt(expected_rank * rank_array[i])
-        # Use binary search to find the expected rating, now set 15 for loops
-        # TODO: could set a minimal [lo, hi] range to break the for loops in advance, which could be accurate enough.
-        # Newton's method should be faster to solve this kind of problem, but the derivative of this function is not
-        # easy to get(I don't know for now), maybe slower overall.
+        # Use binary search to find the expected rating
         lo, hi = 0, 4000  # 4000 could be big enough, max rating now is 3686.
+        max_iteration = 25
         target = mean_rank - 1
-        # for t in range(15):
-        while hi - lo > 0.1:
-            # if hi - lo < 0.5:
-            #     break
+        while hi - lo > 0.1 and max_iteration >= 0:
             mid = lo + (hi - lo) / 2
             approximation = np.sum(expected_win_rate(rating_array, mid))
             if approximation < target:
                 hi = mid
             else:
                 lo = mid
+            max_iteration -= 1
         expected_rating = mid
         coefficient_of_delta = fk_for_delta_coefficient(k_array[i])
         expected_rating_list.append(expected_rating)
@@ -122,7 +118,7 @@ async def predict_contest(
             )
         )
     await asyncio.gather(*tasks)
-    logger.info(f"predict_contest finished updating ContestRecordPredict")
+    logger.success(f"predict_contest finished updating ContestRecordPredict")
     if update_user_using_prediction:
         logger.info(f"immediately write predicted result back into User collection.")
         tasks = (
@@ -140,4 +136,4 @@ async def predict_contest(
             ) for record in records
         )
         await asyncio.gather(*tasks)
-        logger.info(f"updated user using predicted result")
+        logger.success(f"updated user using predicted result")

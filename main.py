@@ -9,16 +9,8 @@ from app.utils import start_loguru
 
 async def start():
     start_loguru()
-
     await start_async_mongodb()
     await start_scheduler()
-
-    # from app.crawler.contests import first_time_contest_crawler
-    # await first_time_contest_crawler()
-
-    # from app.core.predictor import predict_contest
-    # await predict_contest(contest_name="weekly-contest-294")
-
     logger.success("started all entry functions")
 
 
