@@ -3,13 +3,13 @@ from typing import Optional
 import asyncio
 
 from loguru import logger
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Body
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.utils import start_loguru
-from app.db.models import ContestRecordPredict, ContestRecordArchive, KeyUniqueContestRecord
+from app.db.models import ContestRecordPredict, ContestRecordArchive, KeyUniqueContestRecord, Contest
 from app.db.mongodb import start_async_mongodb, get_async_mongodb_collection
 
 
@@ -122,17 +122,50 @@ async def contest_user_rank_list(
         unique_contest_record: KeyUniqueContestRecord,
 ):
     logger.info(f"request.client={request.client}")
+    contest = await Contest.find_one(Contest.titleSlug == unique_contest_record.contest_name)
+    if not contest:
+        logger.error("contest not found for unique_contest_record={unique_contest_record}")
+        return {}
+    start_time = contest.startTime
     record: ContestRecordArchive = await ContestRecordArchive.find_one(
         ContestRecordArchive.contest_name == unique_contest_record.contest_name,
         ContestRecordArchive.username == unique_contest_record.username,
         ContestRecordArchive.data_region == unique_contest_record.data_region,
         )
     data = [
-        ["Minute", "Rank"],
+        ["Minute", "User", "Rank"],
     ] + [
-        [i, x] for i, x in enumerate(record.real_time_rank or [])
+        [i, unique_contest_record.username, x] for i, x in enumerate(record.real_time_rank or [])
     ]
     logger.info(f"user={unique_contest_record} data={data}")
     return {
-        "real_time_rank": data
+        "real_time_rank": data,
+        "start_time": start_time,
+    }
+
+
+@app.post("/questions_finished_list")
+async def contest_questions_finished_list(
+        request: Request,
+        contest_name: str = Body(embed=True),
+):
+    logger.info(f"request.client={request.client}")
+    record: Contest = await Contest.find_one(
+        Contest.titleSlug == contest_name,
+        )
+    questions = record.questions
+    if not questions:
+        logger.error(f"questions = {questions}, no data now")
+    questions.sort(key=lambda q: q.credit)
+    logger.info(f"questions={questions}")
+    data = [["Minute", "Question", "Count"]]
+    for i, question in enumerate(questions):
+        data.extend(
+            [
+                [minute, f"Q{i+1}", count] for minute, count in enumerate(question.real_time_count)
+            ]
+        )
+    logger.info(f"contest_name={contest_name} data={data}")
+    return {
+        "real_time_count": data
     }

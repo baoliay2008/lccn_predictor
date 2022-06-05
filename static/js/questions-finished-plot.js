@@ -1,41 +1,37 @@
-$(".rankListClick").on('click', function () {
-    const contest_name = $(this).attr("contest_name");
-    const username = $(this).attr("username");
-    const data_region = $(this).attr("data_region");
+window.onload = function () {
+    const contest_name = $("#question_plot").attr("contest_name");
+    if (!contest_name){
+        console.log("not found");
+        return;
+    }
     $.ajax({
-        url: "/user_rank_list",
+        url: "/questions_finished_list",
         type: "POST",
         contentType: "application/json",
         data: JSON.stringify({
             "contest_name": contest_name,
-            "username": username,
-            "data_region": data_region
         }),
         dataType: "json",
         success: function (data) {
-            const real_time_rank = data["real_time_rank"];
-            trend_plot(real_time_rank, username);
-            $("#question_plot").hide();
-            $("#user_rank_plot").show();
+            const real_time_count = data["real_time_count"];
+            trend_plot(real_time_count);
         },
         error: function () {
-            console.log("ajax to /user_rank_list error.")
+            console.log("ajax to /questions_finished_list error.")
         }
     })
-});
+};
 
-let chartDom = document.getElementById('user_rank_plot');
+let chartDom = document.getElementById('question_plot');
 let myChart = echarts.init(chartDom);
 let option;
 
-function trend_plot(rank_list, username) {
-    const users = [
-        username
-    ];
+function trend_plot(rank_list) {
+    const questions = ['Q1', 'Q2', 'Q3', 'Q4'];
     const datasetWithFilters = [];
     const seriesList = [];
-    echarts.util.each(users, function (user) {
-        var datasetId = 'dataset_' + user;
+    echarts.util.each(questions, function (question) {
+        var datasetId = 'dataset_' + question;
         datasetWithFilters.push({
             id: datasetId,
             fromDatasetId: 'dataset_raw',
@@ -43,7 +39,7 @@ function trend_plot(rank_list, username) {
                 type: 'filter',
                 config: {
                     and: [
-                        {dimension: 'User', '=': user}
+                        {dimension: 'Question', '=': question}
                     ]
                 }
             }
@@ -52,7 +48,7 @@ function trend_plot(rank_list, username) {
             type: 'line',
             datasetId: datasetId,
             showSymbol: false,
-            name: user,
+            name: question,
             endLabel: {
                 show: true,
                 formatter: function (params) {
@@ -67,10 +63,10 @@ function trend_plot(rank_list, username) {
             },
             encode: {
                 x: 'Minute',
-                y: 'Rank',
-                label: ['User', 'Rank'],
+                y: 'Count',
+                label: ['Question', 'Count'],
                 itemName: 'Minute',
-                tooltip: ['Rank']
+                tooltip: ['Count']
             }
         });
     });
@@ -84,7 +80,7 @@ function trend_plot(rank_list, username) {
             ...datasetWithFilters
         ],
         title: {
-            text: 'User Real Time Rank',
+            text: 'Question Finished Count',
             x: 'center'
         },
         tooltip: {
@@ -96,7 +92,7 @@ function trend_plot(rank_list, username) {
             name: 'Minute'
         },
         yAxis: {
-            name: 'Rank'
+            name: 'Accepted'
         },
         grid: {
             right: 140
@@ -106,4 +102,5 @@ function trend_plot(rank_list, username) {
     myChart.setOption(option);
 }
 
-option && myChart.setOption(option);
+
+option && myChart.setOption(option, notMerge = true);

@@ -42,7 +42,7 @@
                     {% if current_page %}
                     <a class="waves-effect waves-light btn-small black" href="/" style="display: flex; justify-content: center;">
                     {% else %}
-                    <a class="waves-effect waves-light btn-small black pulse" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
+                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
                     {% endif %}
                         <i class="material-icons">arrow_back</i>
                     </a>
@@ -50,11 +50,13 @@
                 <div class="col s9 m10 l10" style="text-align: center; font-size: 1.5rem;">
                     {{' '.join(contest_name.split('-')) | title }}
                 </div>
-<!--                <div class="col s1">-->
-<!--                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">-->
-<!--                        <i class="material-icons">refresh</i>-->
-<!--                    </a>-->
-<!--                </div>-->
+                {% if current_page %}
+                <div class="col s1">
+                    <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
+                        <i class="material-icons">refresh</i>
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -75,7 +77,10 @@
             </form>
         </div>
 
-        <div class="container" id="main" style="width: 90em; height:20em;"></div>
+        {% if current_page == 1 %}
+        <div class="container" id="question_plot" style=" width: 80em; height:30em;" contest_name="{{contest_name}}"></div>
+        {% endif %}
+        <div class="container" id="user_rank_plot" style="display:none; width: 80em; height:30em;"></div>
 
         <table class="container highlight centered responsive-table">
             <thead>
@@ -194,7 +199,7 @@
         <div class="footer-copyright">
             <div class="container">
                 © 2022 Copyright Li Bao.
-                <a class="grey-text text-lighten-4 right" href="https://github.com/baoliay2008">Follow me on Github</a>
+                <a class="grey-text text-lighten-4 right" href="https://github.com/baoliay2008">Every hero has a code :)</a>
             </div>
         </div>
     </footer>
@@ -209,5 +214,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
     <script src="{{url_for('static', path='/js/user-rank-plot.js')}}" type="module" ></script>
+
+    <script src="{{url_for('static', path='/js/questions-finished-plot.js')}}" type="module" ></script>
 
 </html>
