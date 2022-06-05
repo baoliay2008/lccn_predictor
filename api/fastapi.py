@@ -124,20 +124,24 @@ async def contest_user_rank_list(
     logger.info(f"request.client={request.client}")
     contest = await Contest.find_one(Contest.titleSlug == unique_contest_record.contest_name)
     if not contest:
-        logger.error("contest not found for unique_contest_record={unique_contest_record}")
+        logger.error(f"contest not found for unique_contest_record={unique_contest_record}")
         return {}
     start_time = contest.startTime
-    record: ContestRecordArchive = await ContestRecordArchive.find_one(
+    record = await ContestRecordArchive.find_one(
         ContestRecordArchive.contest_name == unique_contest_record.contest_name,
         ContestRecordArchive.username == unique_contest_record.username,
         ContestRecordArchive.data_region == unique_contest_record.data_region,
         )
+    if not record:
+        logger.error(f"user contest record not found for unique_contest_record={unique_contest_record}")
     data = [
         ["Minute", "User", "Rank"],
     ] + [
-        [i, unique_contest_record.username, x] for i, x in enumerate(record.real_time_rank or [])
+        [i, unique_contest_record.username, x] for i, x in enumerate(
+            record.real_time_rank if record and record.real_time_rank else []
+        )
     ]
-    logger.info(f"user={unique_contest_record} data={data}")
+    logger.debug(f"user={unique_contest_record} data={data}")
     return {
         "real_time_rank": data,
         "start_time": start_time,
@@ -150,10 +154,13 @@ async def contest_questions_finished_list(
         contest_name: str = Body(embed=True),
 ):
     logger.info(f"request.client={request.client}")
-    record: Contest = await Contest.find_one(
+    contest = await Contest.find_one(
         Contest.titleSlug == contest_name,
         )
-    questions = record.questions
+    if not contest:
+        logger.error(f"contest not found for contest_name={contest_name}")
+        return {}
+    questions = contest.questions
     if not questions:
         logger.error(f"questions = {questions}, no data now")
     questions.sort(key=lambda q: q.credit)
@@ -165,7 +172,7 @@ async def contest_questions_finished_list(
                 [minute, f"Q{i+1}", count] for minute, count in enumerate(question.real_time_count)
             ]
         )
-    logger.info(f"contest_name={contest_name} data={data}")
+    logger.debug(f"contest_name={contest_name} data={data}")
     return {
         "real_time_count": data
     }
