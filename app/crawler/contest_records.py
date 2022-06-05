@@ -6,8 +6,7 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
-from app.core.rank import save_submission, save_question_finish_count
-from app.crawler.contest import fill_questions_field
+from app.core.rank import save_submission
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
@@ -101,6 +100,4 @@ async def save_archive_contest_records(
         await save_users_of_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
     else:
         logger.info(f"save_users={save_users}, will not save users")
-    await fill_questions_field(contest_name, questions_list)
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
-    await save_question_finish_count(contest_name)

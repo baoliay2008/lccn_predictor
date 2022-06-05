@@ -41,7 +41,7 @@ async def multi_upsert_contests(
             )
         )
     await asyncio.gather(*tasks)
-    logger.info("finished")
+    logger.success("finished")
 
 
 async def multi_request_past_contests(max_page_num: int) -> List[Dict]:
@@ -70,7 +70,7 @@ async def multi_request_past_contests(max_page_num: int) -> List[Dict]:
         past_contests.extend(
             response.json().get("data", {}).get("pastContests", {}).get("data", [])
         )
-    logger.info("finished")
+    logger.success("finished")
     return past_contests
 
 
@@ -86,7 +86,7 @@ async def save_past_contests() -> None:
     max_page_num = int(max_page_num_search.groups()[0])
     past_contests = await multi_request_past_contests(max_page_num)
     await multi_upsert_contests(past_contests, past=True)
-    logger.info("finished")
+    logger.success("finished")
 
 
 async def save_top_two_contests() -> None:
@@ -113,13 +113,13 @@ async def save_top_two_contests() -> None:
         return
     logger.info(top_two_contests)
     await multi_upsert_contests(top_two_contests, past=False)
-    logger.info("finished")
+    logger.success("finished")
 
 
 async def save_all_contests() -> None:
     await save_top_two_contests()
     await save_past_contests()
-    logger.info("finished")
+    logger.success("finished")
 
 
 async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None:
@@ -136,7 +136,7 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
                 }
             )
         )
-        logger.info("finished")
+        logger.success("finished")
     except Exception as e:
         logger.error(
             f"failed to fill questions fields for contest_name={contest_name} questions={questions} e={e}"

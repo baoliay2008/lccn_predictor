@@ -137,7 +137,7 @@ async def contest_user_rank_list(
     data = [
         ["Minute", "User", "Rank"],
     ] + [
-        [i, unique_contest_record.username, x] for i, x in enumerate(
+        [minute+1, unique_contest_record.username, x] for minute, x in enumerate(
             record.real_time_rank if record and record.real_time_rank else []
         )
     ]
@@ -169,7 +169,7 @@ async def contest_questions_finished_list(
     for i, question in enumerate(questions):
         data.extend(
             [
-                [minute, f"Q{i+1}", count] for minute, count in enumerate(question.real_time_count)
+                [minute+1, f"Q{i+1}", count] for minute, count in enumerate(question.real_time_count)
             ]
         )
     logger.debug(f"contest_name={contest_name} data={data}")

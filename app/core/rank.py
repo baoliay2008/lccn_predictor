@@ -6,52 +6,10 @@ from typing import List, Dict, Tuple
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
+from app.crawler.contest import fill_questions_field
 from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
 from app.utils import epoch_time_to_utc_datetime, get_contest_end_time
-
-
-async def aggregate_question_real_time_count(
-        contest_name: str,
-        question_id: int,
-        time_point: datetime,
-) -> int:
-    col = get_async_mongodb_collection(Submission.__name__)
-    res = [
-        x async for x in col.aggregate(
-            [
-                {
-                    "$match": {
-                        "contest_name": contest_name,
-                        "question_id": question_id,
-                    }
-                },
-                {
-                    "$addFields": {
-                        "penalty_date": {
-                            "$dateAdd": {
-                                "startDate": "$date",
-                                "unit": "minute",
-                                "amount": {"$multiply": [5, "$fail_count"]}
-                            }
-                        }
-                    }
-                },
-                {
-                    "$match": {
-                        "penalty_date": {"$lte": time_point}
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": None,
-                        "finished_count": {"$sum": 1},
-                    }
-                }
-            ]
-        )
-    ]
-    return res[0].get("finished_count") if res else 0
 
 
 async def save_question_finish_count(
@@ -64,18 +22,22 @@ async def save_question_finish_count(
     time_series = list()
     end_time = get_contest_end_time(contest_name)
     start_time = end_time - timedelta(minutes=90)
-    while start_time <= end_time:
+    while (start_time := start_time + timedelta(minutes=delta_minutes)) <= end_time:
         time_series.append(start_time)
-        start_time += timedelta(minutes=delta_minutes)
     logger.info(f"contest_name={contest_name} time_series={time_series}")
     for question in contest.questions:
         question.real_time_count = await asyncio.gather(
             *[
-                aggregate_question_real_time_count(contest_name, question.question_id, time_point)
+                Submission.find(
+                    Submission.contest_name == contest_name,
+                    Submission.question_id == question.question_id,
+                    Submission.date <= time_point,
+                ).count()
                 for time_point in time_series
             ]
         )
     await contest.save()
+    logger.success("finished")
 
 
 async def aggregate_rank_at_time_point(
@@ -145,7 +107,7 @@ async def save_real_time_rank(
     end_time = get_contest_end_time(contest_name)
     start_time = end_time - timedelta(minutes=90)
     i = 1
-    while start_time <= end_time:
+    while (start_time := start_time + timedelta(minutes=delta_minutes)) <= end_time:
         rank_map, last_rank = await aggregate_rank_at_time_point(
             contest_name, start_time
         )
@@ -156,7 +118,6 @@ async def save_real_time_rank(
         for k in real_time_rank_map.keys():
             if len(real_time_rank_map[k]) != i:
                 real_time_rank_map[k].append(last_rank)
-        start_time += timedelta(minutes=delta_minutes)
         i += 1
     tasks = (
         ContestRecordArchive.find_one(
@@ -182,6 +143,7 @@ async def save_submission(
         nested_submission_list: List[Dict],
         questions_list: List[Dict],
 ) -> None:
+    await fill_questions_field(contest_name, questions_list)
     question_credit_mapper = {
         question["question_id"]: question["credit"]
         for question in questions_list
@@ -220,3 +182,4 @@ async def save_submission(
     await asyncio.gather(*tasks)
     logger.success("finished updating submissions, begin to save real_time_rank")
     await save_real_time_rank(contest_name)
+    await save_question_finish_count(contest_name)
