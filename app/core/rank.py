@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.crawler.contest import fill_questions_field
+from app.crawler.contest import fill_questions_field, save_all_contests
 from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
 from app.utils import epoch_time_to_utc_datetime, get_contest_start_time
@@ -26,16 +26,15 @@ async def save_question_finish_count(
         time_series.append(start_time)
     logger.info(f"contest_name={contest_name} time_series={time_series}")
     for question in contest.questions:
-        question.real_time_count = await asyncio.gather(
-            *[
-                Submission.find(
+        tasks = (
+            Submission.find(
                     Submission.contest_name == contest_name,
                     Submission.question_id == question.question_id,
                     Submission.date <= time_point,
-                ).count()
-                for time_point in time_series
-            ]
+            ).count()
+            for time_point in time_series
         )
+        question.real_time_count = await asyncio.gather(*tasks)
     await contest.save()
     logger.success("finished")
 
@@ -99,6 +98,7 @@ async def save_real_time_rank(
     users: List[ProjectionUniqueUser] = (
         await ContestRecordArchive.find(
             ContestRecordArchive.contest_name == contest_name,
+            ContestRecordArchive.score != 0,  # No need to query users who have 0 score
         )
         .project(ProjectionUniqueUser)
         .to_list()
@@ -111,7 +111,6 @@ async def save_real_time_rank(
         rank_map, last_rank = await aggregate_rank_at_time_point(
             contest_name, start_time
         )
-        # logger.info(f"rank_map = {rank_map}, last_rank = {last_rank}")
         last_rank += 1
         for (username, data_region), rank in rank_map.items():
             real_time_rank_map[(username, data_region)].append(rank)
@@ -143,6 +142,7 @@ async def save_submission(
         nested_submission_list: List[Dict],
         questions_list: List[Dict],
 ) -> None:
+    await save_all_contests()
     await fill_questions_field(contest_name, questions_list)
     question_credit_mapper = {
         question["question_id"]: question["credit"]
@@ -163,7 +163,7 @@ async def save_submission(
                 for value_dict in nested_submission_dict.values()
             ]
         )
-    tasks = [
+    tasks = (
         Submission.find_one(
             Submission.contest_name == submission.contest_name,
             Submission.username == submission.username,
@@ -178,8 +178,8 @@ async def save_submission(
             on_insert=submission,
         )
         for submission in submission_objs
-    ]
+    )
     await asyncio.gather(*tasks)
     logger.success("finished updating submissions, begin to save real_time_rank")
-    await save_real_time_rank(contest_name)
     await save_question_finish_count(contest_name)
+    await save_real_time_rank(contest_name)

@@ -15,6 +15,7 @@ from app.db.models import ContestRecordPredict, ContestRecordArchive, User
 async def request_contest_ranking(
     contest_name: str,
 ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+    logger.info("start")
     req = httpx.get(
         f"https://leetcode.com/contest/api/ranking/{contest_name}/",
         timeout=60,
@@ -39,6 +40,7 @@ async def request_contest_ranking(
         res_dict = res.json()
         user_rank_list.extend(res_dict.get("total_rank"))
         nested_submission_list.extend(res_dict.get("submissions"))
+    logger.info("finished")
     return user_rank_list, nested_submission_list, questions_list
 
 

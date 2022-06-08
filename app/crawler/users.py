@@ -121,6 +121,7 @@ async def save_users_of_contest(
     if in_predict_col:
         to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
+            ContestRecordPredict.score != 0,  # for prediction, just focus on records which have a score.
             batch_size=10,
         )
     else:
@@ -139,9 +140,9 @@ async def save_users_of_contest(
             logger.info(f"user in db already, won't update, {contest_record}")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
-            logger.info(f"for loop run multi_request_list \n"
-                  f"cn_multi_request_list{cn_multi_request_list}\n"
-                  f"us_multi_request_list{us_multi_request_list}")
+            logger.trace(f"for loop run multi_request_list "
+                         f"cn_multi_request_list={cn_multi_request_list} "
+                         f"us_multi_request_list={us_multi_request_list}")
             await asyncio.gather(
                 multi_request_user_cn(cn_multi_request_list),
                 multi_request_user_us(us_multi_request_list),
@@ -152,9 +153,9 @@ async def save_users_of_contest(
             us_multi_request_list.append(contest_record)
         else:
             logger.critical(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
-    logger.info(f"rest of run multi_request_list \n"
-          f"cn_multi_request_list{cn_multi_request_list}\n"
-          f"us_multi_request_list{us_multi_request_list}")
+    logger.trace(f"rest of run run multi_request_list "
+                 f"cn_multi_request_list={cn_multi_request_list} "
+                 f"us_multi_request_list={us_multi_request_list}")
     await asyncio.gather(
         multi_request_user_cn(cn_multi_request_list),
         multi_request_user_us(us_multi_request_list),
