@@ -14,7 +14,7 @@ def get_passed_weeks(t: datetime, base_t: datetime) -> int:
     return math.floor((t - base_t).total_seconds() / (7 * 24 * 60 * 60))
 
 
-def get_contest_end_time(contest_name: str) -> datetime:
+def get_contest_start_time(contest_name: str) -> datetime:
     contest_num = int(contest_name.split("-")[-1])
     if contest_name.lower().startswith("weekly"):
         start_time = WEEKLY_CONTEST_BASE.datetime + timedelta(
@@ -28,7 +28,7 @@ def get_contest_end_time(contest_name: str) -> datetime:
     return start_time
 
 
-def start_loguru(process: str = "main"):
+def start_loguru(process: str = "main") -> None:
     """
     error-prone warning: misuse process parameter (for example, use main in fastapi process
     or reassign a different value) will mess up logs.
@@ -46,7 +46,7 @@ def start_loguru(process: str = "main"):
             level=loguru_config["level"],
         )
     except Exception as e:
-        logger.error(
+        logger.exception(
             f"Failed to start loguru, check loguru config in config.yaml file. error={e}"
         )
         sys.exit(1)

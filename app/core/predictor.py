@@ -1,58 +1,53 @@
 import asyncio
 from datetime import datetime
 from functools import lru_cache
-from typing import List
 
 from loguru import logger
 import numpy as np
 from beanie.odm.operators.update.general import Set
 from numba import jit
 
-from app.crawler.contest_records import save_predict_contest_records
 from app.db.models import User, ContestRecordPredict
 
 
-async def fill_old_rating(record: ContestRecordPredict):
-    user = await User.find_one(
-        User.username == record.username,
-        User.data_region == record.data_region,
-    )
-    if not user:
-        record.old_rating = 1500
-        record.attendedContestsCount = 0
-    else:
-        record.old_rating = user.rating
-        record.attendedContestsCount = user.attendedContestsCount
-    await record.save()
+@lru_cache
+def pre_sum_of_sigma(k):
+    if k < 0:
+        raise ValueError(f"k={k}, pre_sum's index less than zero!")
+    return (5 / 7) ** k + pre_sum_of_sigma(k-1) if k >= 1 else 1
 
 
 @lru_cache
 def fk_for_delta_coefficient(k):
-    # TODO: cache all possible k value(prefix array calculate) when starting program, just save a dict in memory.
-    # Or, when k is big enough, return 2/9 directly.
-    return 1 / (1 + sum((5 / 7) ** i for i in range(k + 1)))
+    """
+    this function could `return 1 / (1 + sum((5 / 7) ** i for i in range(k + 1)))` directly,
+    but use a `pre_sum_of_sigma`(which is also cached) function is faster.
+    when k is big enough, result approximately equal to 2/9.
+    :param k:
+    :return:
+    """
+    return 1 / (1 + pre_sum_of_sigma(k))
 
 
 @jit(nopython=True, fastmath=True, parallel=True)
-def expected_win_rate(vector_element, constant):
-    # I tested this function, result had shown this function has a quite decent performance.
+def expected_win_rate(vector, scalar):
+    # test result had shown this function has a quite decent performance.
     # TODO: write a benchmark note.
-    return 1 / (1 + np.power(10, (constant - vector_element) / 400))
+    return 1 / (1 + np.power(10, (scalar - vector) / 400))
 
 
 async def predict_contest(
         contest_name: str,
-        update_user_using_prediction: bool = False,
 ) -> None:
     """
     Core predict function using official contest rating algorithm
     :param contest_name:
-    :param update_user_using_prediction: use for biweekly contest because next day's weekly contest needs the latest
     :return:
     """
-    logger.info("start run predict_contest")
-    await save_predict_contest_records(contest_name)
-    records: List[ContestRecordPredict] = (
+    # update_user_using_prediction is True for biweekly contests because next day's weekly contest needs the latest info
+    update_user_using_prediction = contest_name.lower().startswith("bi")
+    logger.info(f"start run predict_contest, update_user_using_prediction={update_user_using_prediction}")
+    records = (
         await ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
             ContestRecordPredict.score != 0,
@@ -60,11 +55,6 @@ async def predict_contest(
         .sort(ContestRecordPredict.rank)
         .to_list()
     )
-    tasks = (
-        fill_old_rating(record)
-        for record in records
-    )
-    await asyncio.gather(*tasks)
 
     rank_array = np.array([record.rank for record in records])
     rating_array = np.array([record.old_rating for record in records])
@@ -136,4 +126,4 @@ async def predict_contest(
             ) for record in records
         )
         await asyncio.gather(*tasks)
-        logger.success(f"updated user using predicted result")
+        logger.success(f"predict_contest finished updating User using predicted result")

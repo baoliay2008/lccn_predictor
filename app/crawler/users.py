@@ -1,10 +1,12 @@
 import asyncio
+import copy
 from typing import List, Optional
 
 from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
+from app.constant import DEFAULT_NEW_USER_CONTEST_INFO
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordArchive, User, ContestRecordPredict
 
@@ -15,21 +17,27 @@ async def multi_upsert_user(
 ) -> None:
     update_tasks = list()
     for response, contest_record in zip(graphql_response_list, multi_request_list):
-        if response is None:
-            logger.info(f"warning: contest_record={contest_record} user query response is None")
+        try:
+            data = response.json().get("data", {}).get("userContestRanking")
+            logger.debug(f"contest_record={contest_record}, data={data}")
+            if data is None:
+                logger.info(f"new user found, contest_record={contest_record}. graphql data is None")
+                data = copy.copy(DEFAULT_NEW_USER_CONTEST_INFO)
+            user = User(
+                username=contest_record.username,
+                user_slug=contest_record.user_slug,
+                data_region=contest_record.data_region,
+                attendedContestsCount=data["attendedContestsCount"],
+                rating=data["rating"],
+            )
+        except Exception as e:
+            # This is a bug that will cause **inaccurate prediction**, because missing user in User collection
+            # will be processed as new user using default value (rating, count)=(1500, 0).
+            # possible reasons:
+            # 1. `response` could be `None` because failed times reached `retry_num` in `multi_http_request` function.
+            # 2. graphql result userContestRanking doesn't have `attendedContestsCount` or `rating` key.
+            logger.exception(f"user parse error. response={response} contest_record={contest_record} Exception={e}")
             continue
-        data = response.json().get("data", {}).get("userContestRanking")
-        if data is None:
-            logger.info(f"warning: contest_record={contest_record} user query data is None")
-            continue
-        logger.info(f"multi_upsert_user contest_record={contest_record}, data={data}")
-        user = User(
-            username=contest_record.username,
-            user_slug=contest_record.user_slug,
-            data_region=contest_record.data_region,
-            attendedContestsCount=data.get("attendedContestsCount"),
-            rating=data.get("rating"),
-        )
         update_tasks.append(
             User.find_one(
                 User.username == user.username,
@@ -42,7 +50,7 @@ async def multi_upsert_user(
                         User.rating: user.rating,
                     }
                 ),
-                on_insert=user
+                on_insert=user,
             )
         )
     await asyncio.gather(*update_tasks)

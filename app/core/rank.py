@@ -9,7 +9,7 @@ from loguru import logger
 from app.crawler.contest import fill_questions_field
 from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import epoch_time_to_utc_datetime, get_contest_end_time
+from app.utils import epoch_time_to_utc_datetime, get_contest_start_time
 
 
 async def save_question_finish_count(
@@ -20,8 +20,8 @@ async def save_question_finish_count(
         Contest.titleSlug == contest_name,
     )
     time_series = list()
-    end_time = get_contest_end_time(contest_name)
-    start_time = end_time - timedelta(minutes=90)
+    start_time = get_contest_start_time(contest_name)
+    end_time = start_time + timedelta(minutes=90)
     while (start_time := start_time + timedelta(minutes=delta_minutes)) <= end_time:
         time_series.append(start_time)
     logger.info(f"contest_name={contest_name} time_series={time_series}")
@@ -104,8 +104,8 @@ async def save_real_time_rank(
         .to_list()
     )
     real_time_rank_map = {(user.username, user.data_region): list() for user in users}
-    end_time = get_contest_end_time(contest_name)
-    start_time = end_time - timedelta(minutes=90)
+    start_time = get_contest_start_time(contest_name)
+    end_time = start_time + timedelta(minutes=90)
     i = 1
     while (start_time := start_time + timedelta(minutes=delta_minutes)) <= end_time:
         rank_map, last_rank = await aggregate_rank_at_time_point(

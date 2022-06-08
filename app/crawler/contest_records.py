@@ -45,28 +45,40 @@ async def request_contest_ranking(
 async def save_predict_contest_records(
     contest_name: str,
 ) -> None:
-    async def _insert_one_if_not_exists(_user_rank):
-        # must insert once here
-        doc = await ContestRecordPredict.find_one(
-            ContestRecordPredict.contest_name == _user_rank.contest_name,
-            ContestRecordPredict.username == _user_rank.username,
-            ContestRecordPredict.data_region == _user_rank.data_region,
+    async def _fill_old_rating_and_count(_user_rank: ContestRecordPredict):
+        user = await User.find_one(
+            User.username == _user_rank.username,
+            User.data_region == _user_rank.data_region,
         )
-        if doc:
-            logger.info(f"doc found, won't insert. {doc}")
-        else:
-            await ContestRecordPredict.insert_one(_user_rank)
+        _user_rank.old_rating = user.rating
+        _user_rank.attendedContestsCount = user.attendedContestsCount
+        await _user_rank.save()
+
     user_rank_list, _, _ = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
+        doc = await ContestRecordPredict.find_one(
+            ContestRecordPredict.contest_name == contest_name,
+            ContestRecordPredict.username == user_rank_dict["username"],
+            ContestRecordPredict.data_region == user_rank_dict["data_region"],
+        )
+        if doc:
+            # only insert once for ContestRecordPredict
+            logger.info(f"doc found, won't insert. {doc}")
+            continue
         user_rank_dict.update({"contest_name": contest_name})
         user_rank = ContestRecordPredict.parse_obj(user_rank_dict)
         user_rank_objs.append(user_rank)
-    tasks = (
-        _insert_one_if_not_exists(user_rank) for user_rank in user_rank_objs
+    insert_tasks = (
+        ContestRecordPredict.insert_one(user_rank) for user_rank in user_rank_objs
     )
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*insert_tasks)
     await save_users_of_contest(contest_name=contest_name)
+    # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
+    fill_tasks = (
+        _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs
+    )
+    await asyncio.gather(*fill_tasks)
 
 
 async def save_archive_contest_records(
