@@ -23,6 +23,7 @@ class Contest(Document):
     past: bool
     questions: Optional[List[Question]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
+    predict_time: Optional[datetime] = None
 
     @validator('startTime', 'endTime', pre=True)
     def epoch_to_utc(cls, v):

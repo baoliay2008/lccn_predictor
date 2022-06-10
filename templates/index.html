@@ -50,15 +50,15 @@
             </thead>
 
             <tbody>
-                {% for contest in distinct_contests %}
+                {% for contest in predict_contests %}
                 <tr>
                     <td>
-                        <a href="/{{contest.contest_name}}/1">{{contest.contest_name}}</a>
+                        <a href="/{{contest.titleSlug}}/1">{{contest.title}}</a>
                     </td>
                     <td>{{contest.predict_time.strftime('%Y-%m-%d')}}</td>
                     <td>
                        <span>
-                            <a href="https://leetcode.cn/contest/{{contest.contest_name}}/ranking">LCCN </a> / <a href="https://leetcode.com/contest/{{contest.contest_name}}/ranking">LCUS </a>
+                            <a href="https://leetcode.cn/contest/{{contest.titleSlug}}/ranking">LCCN </a> / <a href="https://leetcode.com/contest/{{contest.titleSlug}}/ranking">LCUS </a>
                        </span>
                     </td>
                 </tr>

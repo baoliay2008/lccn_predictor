@@ -1,6 +1,5 @@
 import math
 from typing import Optional
-import asyncio
 
 from loguru import logger
 from fastapi import FastAPI, Request, Form, Body
@@ -29,29 +28,18 @@ async def index_page_get(
         request: Request,
 ):
     logger.info(f"index_page_get request.client={request.client}")
-    # Now beanie ODM doesn't have a distinct method, use raw mongodb query here.
-    # https://github.com/roman-right/beanie/issues/133
-    # https://github.com/roman-right/beanie/pull/268
-    col = get_async_mongodb_collection(ContestRecordPredict.__name__)
-    contest_name_list = await col.distinct("contest_name")
-    tasks = [
-        ContestRecordPredict.find_one(
-            ContestRecordPredict.contest_name == contest_name,
-        ) for contest_name in contest_name_list
-    ]
-    distinct_contests = await asyncio.gather(*tasks)
-    logger.debug(distinct_contests)
-    # TODO: support showing contests metadata in homepage, do the following things:
-    # 1. Add a contests table in db, save history contests info
-    # and next two coming contest, weekly and biweekly respectively.
-    # 2. Then it's easier to support homepage view(such as table pagination, start and end time and other fields)
-    # 3. Remember front-end table should also be paginated.
-    # 4. Determine whether a contest_name is valid or not in contest_page_get function by querying this new table.
+    predict_contests = (
+        await Contest.find(
+            Contest.predict_time != None,  # beanie does not support `is not None` here.
+        ).sort(-Contest.startTime)
+        .to_list()
+    )
+    logger.debug(f"{predict_contests}")
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "distinct_contests": sorted(distinct_contests, key=lambda obj: obj.insert_time, reverse=True),
+            "predict_contests": predict_contests,
         },
     )
 
@@ -164,7 +152,7 @@ async def contest_questions_finished_list(
     if not questions:
         logger.error(f"questions = {questions}, no data now")
     questions.sort(key=lambda q: q.credit)
-    logger.info(f"questions={questions}")
+    logger.debug(f"questions={questions}")
     data = [["Minute", "Question", "Count"]]
     for i, question in enumerate(questions):
         data.extend(

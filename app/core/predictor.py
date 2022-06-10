@@ -7,7 +7,7 @@ import numpy as np
 from beanie.odm.operators.update.general import Set
 from numba import jit
 
-from app.db.models import User, ContestRecordPredict
+from app.db.models import User, ContestRecordPredict, Contest
 
 
 @lru_cache
@@ -127,3 +127,11 @@ async def predict_contest(
         )
         await asyncio.gather(*tasks)
         logger.success(f"predict_contest finished updating User using predicted result")
+    await Contest.find_one(
+        Contest.titleSlug == contest_name,
+    ).update(
+        Set({
+            Contest.predict_time: datetime.utcnow(),
+        })
+    )
+    logger.info("finished updating predict_time in Contest database")
