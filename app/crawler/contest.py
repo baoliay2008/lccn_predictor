@@ -23,7 +23,7 @@ async def multi_upsert_contests(
             contest = Contest.parse_obj(contest_dict)
             logger.info(contest)
         except Exception as e:
-            logger.error(f"parse contest_dict error {e}. skip upsert {contest_dict}")
+            logger.exception(f"parse contest_dict error {e}. skip upsert {contest_dict}")
             continue
         tasks.append(
             Contest.find_one(

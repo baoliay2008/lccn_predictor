@@ -58,16 +58,11 @@ async def save_predict_contest_records(
 
     user_rank_list, _, _ = await request_contest_ranking(contest_name)
     user_rank_objs = list()
+    # Full update, delete all old records
+    await ContestRecordPredict.find(
+        ContestRecordPredict.contest_name == contest_name,
+    ).delete()
     for user_rank_dict in user_rank_list:
-        doc = await ContestRecordPredict.find_one(
-            ContestRecordPredict.contest_name == contest_name,
-            ContestRecordPredict.username == user_rank_dict["username"],
-            ContestRecordPredict.data_region == user_rank_dict["data_region"],
-        )
-        if doc:
-            # only insert once for ContestRecordPredict
-            logger.info(f"doc found, won't insert. {doc}")
-            continue
         user_rank_dict.update({"contest_name": contest_name})
         user_rank = ContestRecordPredict.parse_obj(user_rank_dict)
         user_rank_objs.append(user_rank)
@@ -78,9 +73,10 @@ async def save_predict_contest_records(
     await save_users_of_contest(contest_name=contest_name)
     # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
     fill_tasks = (
-        _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs
+        _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs if user_rank.score != 0
     )
     await asyncio.gather(*fill_tasks)
+    logger.success("finished")
 
 
 async def save_archive_contest_records(

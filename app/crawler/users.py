@@ -136,7 +136,6 @@ async def save_users_of_contest(
             User.username == contest_record.username,
             User.data_region == contest_record.data_region,
         ):
-            # TODO, iterate ContestRecord and find User one by one is slow, $lookup would be faster.
             logger.info(f"user in db already, won't update, {contest_record}")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
