@@ -10,6 +10,7 @@ from beanie.odm.operators.update.general import Set
 from app.constant import DEFAULT_NEW_USER_CONTEST_INFO
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordArchive, User, ContestRecordPredict
+from app.utils import exception_logger
 
 
 async def multi_upsert_user(
@@ -113,6 +114,7 @@ async def multi_request_user_us(
     us_multi_request_list.clear()
 
 
+@exception_logger
 async def save_users_of_contest(
         contest_name: str,
         predict: bool,
@@ -132,7 +134,6 @@ async def save_users_of_contest(
     cn_multi_request_list = list()
     us_multi_request_list = list()
     async for contest_record in to_be_queried:
-        logger.info(contest_record)
         if predict and await User.find_one(
             User.username == contest_record.username,
             User.data_region == contest_record.data_region,

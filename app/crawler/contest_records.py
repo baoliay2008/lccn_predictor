@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Dict, Tuple
 from math import ceil
 import asyncio
@@ -83,6 +84,7 @@ async def save_archive_contest_records(
         contest_name: str,
         save_users: bool = True,
 ) -> None:
+    time_point = datetime.utcnow()
     user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
@@ -106,6 +108,11 @@ async def save_archive_contest_records(
         for user_rank in user_rank_objs
     )
     await asyncio.gather(*tasks)
+    # remove old records
+    await ContestRecordArchive.find(
+        ContestRecordArchive.contest_name == contest_name,
+        ContestRecordArchive.update_time < time_point,
+    ).delete()
     if save_users is True:
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:

@@ -32,7 +32,7 @@ class Contest(Document):
         elif isinstance(v, datetime):
             return v
         else:
-            raise TypeError(f"startTime={v} is not int or datetime")
+            raise TypeError(f"startTime/endTime={v} is not int or datetime")
 
 
 class ContestRecord(Document):
