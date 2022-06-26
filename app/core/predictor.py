@@ -88,25 +88,19 @@ async def predict_contest(
     logger.info("end loop for calculating expected_rating")
     expected_rating_array = np.array(expected_rating_list)
     coefficient_of_delta_array = np.array(coefficient_of_delta_list)
-    delta_array = coefficient_of_delta_array * (expected_rating_array - rating_array)
-    new_rating_array = rating_array + delta_array
+    delta_rating_array = coefficient_of_delta_array * (expected_rating_array - rating_array)
+    new_rating_array = rating_array + delta_rating_array
 
     # update ContestRecordPredict collection
-    tasks = list()
-    for record, new_rating, delta in zip(records, new_rating_array, delta_array):
-        tasks.append(
-            ContestRecordPredict.find_one(
-                ContestRecordPredict.id == record.id,
-            ).update(
-                Set(
-                    {
-                        ContestRecordPredict.delta_rating: delta,
-                        ContestRecordPredict.new_rating: new_rating,
-                        ContestRecordPredict.predict_time: datetime.utcnow(),
-                    }
-                )
-            )
-        )
+    predict_time = datetime.utcnow()
+    for i, record in enumerate(records):
+        record.delta_rating = delta_rating_array[i]
+        record.new_rating = new_rating_array[i]
+        record.predict_time = predict_time
+    tasks = (
+        record.save()
+        for record in records
+    )
     await asyncio.gather(*tasks)
     logger.success(f"predict_contest finished updating ContestRecordPredict")
     if update_user_using_prediction:
