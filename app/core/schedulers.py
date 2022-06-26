@@ -47,7 +47,7 @@ async def composed_predict_jobs(contest_name: str) -> None:
 async def add_prediction_schedulers(contest_name: str) -> None:
     utc = datetime.utcnow()
     global global_scheduler
-    for pre_save_time in [utc + timedelta(minutes=15 * i) for i in range(1, 6)]:
+    for pre_save_time in [utc + timedelta(minutes=25), utc + timedelta(minutes=70)]:
         global_scheduler.add_job(
             save_predict_contest_records,  # preparation for prediction running, get users in advance.
             kwargs={"contest_name": contest_name},

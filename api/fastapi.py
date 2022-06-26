@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 from typing import Optional
 
 from loguru import logger
@@ -9,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.utils import start_loguru
 from app.db.models import ContestRecordPredict, ContestRecordArchive, KeyUniqueContestRecord, Contest
-from app.db.mongodb import start_async_mongodb, get_async_mongodb_collection
+from app.db.mongodb import start_async_mongodb
 
 
 app = FastAPI()
@@ -30,7 +31,8 @@ async def index_page_get(
     logger.info(f"index_page_get request.client={request.client}")
     predict_contests = (
         await Contest.find(
-            Contest.predict_time != None,  # beanie does not support `is not None` here.
+            #  Contest.predict_time != None,  # beanie does not support `is not None` here.
+            Contest.predict_time > datetime(2000, 1, 1),
         ).sort(-Contest.startTime)
         .to_list()
     )
