@@ -80,7 +80,7 @@ class User(Document):
     user_slug: Indexed(str)
     data_region: Indexed(str)
     attendedContestsCount: int
-    rating: float
+    rating: Indexed(float)
     update_time: datetime = Field(default_factory=datetime.utcnow)
     # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
 

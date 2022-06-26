@@ -32,7 +32,7 @@ async def request_contest_ranking(
     ]
     responses = await multi_http_request(
         {url: {"url": url, "method": "GET"} for url in url_list},
-        concurrent_num=10,
+        concurrent_num=20,
     )
     for res in responses:
         if res is None:
@@ -70,7 +70,7 @@ async def save_predict_contest_records(
         ContestRecordPredict.insert_one(user_rank) for user_rank in user_rank_objs
     )
     await asyncio.gather(*insert_tasks)
-    await save_users_of_contest(contest_name=contest_name)
+    await save_users_of_contest(contest_name=contest_name, predict=True)
     # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
     fill_tasks = (
         _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs if user_rank.score != 0
@@ -107,7 +107,7 @@ async def save_archive_contest_records(
     )
     await asyncio.gather(*tasks)
     if save_users is True:
-        await save_users_of_contest(contest_name=contest_name, in_predict_col=False, new_user_only=False)
+        await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
         logger.info(f"save_users={save_users}, will not save users")
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)

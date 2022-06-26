@@ -1,5 +1,7 @@
 import sys
 import math
+from functools import wraps
+from asyncio import iscoroutinefunction
 from datetime import datetime, timedelta, timezone
 from loguru import logger
 
@@ -50,3 +52,27 @@ def start_loguru(process: str = "main") -> None:
             f"Failed to start loguru, check loguru config in config.yaml file. error={e}"
         )
         sys.exit(1)
+
+
+def exception_logger(func):
+    @wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        try:
+            logger.info(f"{func.__name__} is about to run.")
+            res = await func(*args, **kwargs)
+            logger.success(f"{func.__name__} is finished.")
+            return res
+        except Exception as e:
+            logger.exception(f"{func.__name__} error={e}.")
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            logger.info(f"{func.__name__} is about to run.")
+            res = func(*args, **kwargs)
+            logger.success(f"{func.__name__} is finished.")
+            return res
+        except Exception as e:
+            logger.exception(f"{func.__name__} error={e}.")
+
+    return async_wrapper if iscoroutinefunction(func) else wrapper

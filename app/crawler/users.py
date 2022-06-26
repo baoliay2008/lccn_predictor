@@ -1,5 +1,6 @@
 import asyncio
 import copy
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from loguru import logger
@@ -114,11 +115,10 @@ async def multi_request_user_us(
 
 async def save_users_of_contest(
         contest_name: str,
-        in_predict_col: bool = True,
-        new_user_only: bool = True,
+        predict: bool,
         concurrent_num: int = 200,
 ) -> None:
-    if in_predict_col:
+    if predict:
         to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
             ContestRecordPredict.score != 0,  # for prediction, just focus on records which have a score.
@@ -132,11 +132,14 @@ async def save_users_of_contest(
     cn_multi_request_list = list()
     us_multi_request_list = list()
     async for contest_record in to_be_queried:
-        if new_user_only and await User.find_one(
+        logger.info(contest_record)
+        if predict and await User.find_one(
             User.username == contest_record.username,
             User.data_region == contest_record.data_region,
-        ):
-            logger.info(f"user in db already, won't update, {contest_record}")
+            User.update_time > datetime.utcnow() - timedelta(hours=36),  # skip if user was updated in last 36 hours.
+        ) is not None:
+            logger.info(f"user was updated in last three days, won't update. "
+                        f"contest_record = {contest_record} ")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
             logger.trace(f"for loop run multi_request_list "

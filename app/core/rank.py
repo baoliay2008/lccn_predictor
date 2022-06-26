@@ -9,7 +9,7 @@ from loguru import logger
 from app.crawler.contest import fill_questions_field, save_all_contests
 from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import epoch_time_to_utc_datetime, get_contest_start_time
+from app.utils import epoch_time_to_utc_datetime, get_contest_start_time, exception_logger
 
 
 async def save_question_finish_count(
@@ -90,6 +90,7 @@ async def aggregate_rank_at_time_point(
     return rank_map, raw_rank
 
 
+@exception_logger
 async def save_real_time_rank(
     contest_name: str,
     delta_minutes: int = 1,
@@ -142,6 +143,7 @@ async def save_submission(
         nested_submission_list: List[Dict],
         questions_list: List[Dict],
 ) -> None:
+    time_point = datetime.utcnow()
     await save_all_contests()
     await fill_questions_field(contest_name, questions_list)
     question_credit_mapper = {
@@ -180,6 +182,11 @@ async def save_submission(
         for submission in submission_objs
     )
     await asyncio.gather(*tasks)
+    # Old submissions may be rejudged, must be deleted here, or will cause error when plotting.
+    await Submission.find(
+        Submission.contest_name == contest_name,
+        Submission.update_time < time_point,
+    ).delete()
     logger.success("finished updating submissions, begin to save real_time_rank")
     await save_question_finish_count(contest_name)
     await save_real_time_rank(contest_name)
