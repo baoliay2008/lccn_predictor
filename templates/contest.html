@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <!--Import materialize.css-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/css/materialize.min.css">
 
     <!--Let browser know website is optimized for mobile-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -78,9 +78,9 @@
         </div>
 
         {% if current_page == 1 %}
-        <div class="container" id="question_plot" style=" width: 80em; height:30em;" contest_name="{{contest_name}}"></div>
+        <div class="container hide-on-small-only" id="question_plot" style="width: 80em; height:30em;" contest_name="{{contest_name}}"></div>
         {% endif %}
-        <div class="container" id="user_rank_plot" style="display:none; width: 80em; height:30em;"></div>
+        <div class="container hide-on-small-only" id="user_rank_plot" style="display:none; width: 80em; height:30em;"></div>
 
         <table class="container highlight centered responsive-table">
             <thead>
@@ -91,7 +91,7 @@
                     <th>Old Rating</th>
                     <th>New Rating</th>
                     <th>Delta</th>
-                    <th>Plot</th>
+                    <th class="hide-on-small-only">Plot</th>
                 </tr>
             </thead>
 
@@ -118,7 +118,7 @@
                         {{user.delta_rating | round(2)}}
                     </td>
                     {% endif %}
-                    <td>
+                    <td class="hide-on-small-only">
                         <div class='rankListClick btn-small blue lighten-2 trigger_popup_fricc'
                              contest_name="{{user.contest_name}}"
                              username="{{user.username}}"
@@ -174,11 +174,11 @@
                 <div class="col l6 s12">
                     <h5 class="white-text">LCCN Predictor</h5>
                     <p class="grey-text text-lighten-4">Leetcode weekly and biweekly contest rating predictor.</p>
-                    <a class="waves-effect waves-light btn blue lighten-2" href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20www.baoli.host">
+                    <a class="waves-effect waves-light btn blue lighten-2" href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20lccn.lbao.site">
                         <i class="material-icons left">share</i>twitter
                     </a>
 <!--                    <a class="twitter-share-button" data-show-count="false" data-size="large"-->
-<!--                        href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20www.baoli.host">Share-->
+<!--                        href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20lccn.lbao.site">Share-->
 <!--                    </a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>-->
 
                 </div>
@@ -207,11 +207,11 @@
 
 <!--    <script async defer src="https://buttons.github.io/buttons.js"></script>-->
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.3.2/echarts.min.js" integrity="sha512-weWXHm0Ws2cZKjjwugRMnnOAx9uCP/wUVf84W7/fXQimwYUK28zPDGPprDozomQLpKv6U99xN9PI9+yLI9qxNw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.3.3/echarts.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/js/materialize.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
     <script src="{{url_for('static', path='/js/user-rank-plot.js')}}" type="module" ></script>
 
