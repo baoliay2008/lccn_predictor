@@ -11,6 +11,7 @@ from app.core.rank import save_submission
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordPredict, ContestRecordArchive, User
+from app.utils import exception_logger_reraise
 
 
 async def request_contest_ranking(
@@ -45,6 +46,7 @@ async def request_contest_ranking(
     return user_rank_list, nested_submission_list, questions_list
 
 
+@exception_logger_reraise
 async def save_predict_contest_records(
     contest_name: str,
 ) -> None:
@@ -53,6 +55,7 @@ async def save_predict_contest_records(
             User.username == _user_rank.username,
             User.data_region == _user_rank.data_region,
         )
+        # TODO: why user is None here?
         _user_rank.old_rating = user.rating
         _user_rank.attendedContestsCount = user.attendedContestsCount
         await _user_rank.save()
@@ -77,9 +80,9 @@ async def save_predict_contest_records(
         _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs if user_rank.score != 0
     )
     await asyncio.gather(*fill_tasks)
-    logger.success("finished")
 
 
+@exception_logger_reraise
 async def save_archive_contest_records(
         contest_name: str,
         save_users: bool = True,

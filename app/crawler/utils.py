@@ -42,6 +42,7 @@ async def multi_http_request(
                 else:
                     # response could be an Exception here
                     logger.warning(f"multi_http_request error: "
+                                   f"request={request} "
                                    f"{response.status_code if isinstance(response, httpx.Response) else response}")
                     response_mapper[key] += 1
                     wait_time += 1

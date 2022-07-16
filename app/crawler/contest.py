@@ -8,6 +8,7 @@ from loguru import logger
 
 from app.crawler.utils import multi_http_request
 from app.db.models import Contest, Question
+from app.utils import exception_logger_reraise
 
 
 async def multi_upsert_contests(
@@ -116,6 +117,7 @@ async def save_top_two_contests() -> None:
     logger.success("finished")
 
 
+@exception_logger_reraise
 async def save_all_contests() -> None:
     await save_top_two_contests()
     await save_past_contests()

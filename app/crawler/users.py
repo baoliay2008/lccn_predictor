@@ -10,7 +10,7 @@ from beanie.odm.operators.update.general import Set
 from app.constant import DEFAULT_NEW_USER_CONTEST_INFO
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordArchive, User, ContestRecordPredict
-from app.utils import exception_logger
+from app.utils import exception_logger_reraise
 
 
 async def multi_upsert_user(
@@ -64,7 +64,7 @@ async def multi_request_user_cn(
     cn_response_list = await multi_http_request(
         {
             contest_record.user_slug: {
-                "url": "https://leetcode-cn.com/graphql/noj-go/",
+                "url": "https://leetcode.cn/graphql/noj-go/",
                 "method": "POST",
                 "json": {
                     "query": """
@@ -80,7 +80,7 @@ async def multi_request_user_cn(
             }
             for contest_record in cn_multi_request_list
         },
-        concurrent_num=10,
+        concurrent_num=5,
     )
     await multi_upsert_user(cn_response_list, cn_multi_request_list)
     cn_multi_request_list.clear()
@@ -108,13 +108,13 @@ async def multi_request_user_us(
             }
             for contest_record in us_multi_request_list
         },
-        concurrent_num=10,
+        concurrent_num=20,
     )
     await multi_upsert_user(us_response_list, us_multi_request_list)
     us_multi_request_list.clear()
 
 
-@exception_logger
+@exception_logger_reraise
 async def save_users_of_contest(
         contest_name: str,
         predict: bool,

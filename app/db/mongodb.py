@@ -1,3 +1,4 @@
+import sys
 import urllib.parse
 
 from loguru import logger
@@ -47,17 +48,23 @@ def get_async_mongodb_collection(col_name) -> AgnosticCollection:
 
 
 async def start_async_mongodb() -> None:
-    async_mongodb_database = get_async_mongodb_database()
-    await init_beanie(
-        database=async_mongodb_database,
-        document_models=[
-            Contest,
-            ContestRecordPredict,
-            ContestRecordArchive,
-            User,
-            Submission,
-        ],
-    )
-    logger.success("started mongodb connection")
+    try:
+        async_mongodb_database = get_async_mongodb_database()
+        await init_beanie(
+            database=async_mongodb_database,
+            document_models=[
+                Contest,
+                ContestRecordPredict,
+                ContestRecordArchive,
+                User,
+                Submission,
+            ],
+        )
+        logger.success("started mongodb connection")
+    except Exception as e:
+        logger.exception(
+            f"Failed to start mongodb. error={e}"
+        )
+        sys.exit(1)
 
 

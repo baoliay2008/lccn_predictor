@@ -8,6 +8,7 @@ from beanie.odm.operators.update.general import Set
 from numba import jit
 
 from app.db.models import User, ContestRecordPredict, Contest
+from app.utils import exception_logger_reraise
 
 
 @lru_cache
@@ -36,6 +37,7 @@ def expected_win_rate(vector, scalar):
     return 1 / (1 + np.power(10, (scalar - vector) / 400))
 
 
+@exception_logger_reraise
 async def predict_contest(
         contest_name: str,
 ) -> None:

@@ -1,8 +1,10 @@
 import sys
 import math
-from functools import wraps
+from functools import wraps, partial
 from asyncio import iscoroutinefunction
 from datetime import datetime, timedelta, timezone
+from typing import Callable, Any
+
 from loguru import logger
 
 from app.constant import WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE
@@ -54,7 +56,7 @@ def start_loguru(process: str = "main") -> None:
         sys.exit(1)
 
 
-def exception_logger(func):
+def exception_logger(func: Callable[..., Any], reraise: bool):
     @wraps(func)
     async def async_wrapper(*args, **kwargs):
         try:
@@ -64,6 +66,8 @@ def exception_logger(func):
             return res
         except Exception as e:
             logger.exception(f"{func.__name__} error={e}.")
+            if reraise:
+                raise e
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -73,6 +77,12 @@ def exception_logger(func):
             logger.success(f"{func.__name__} is finished.")
             return res
         except Exception as e:
-            logger.exception(f"{func.__name__} error={e}.")
+            logger.exception(f"{func.__name__} args={args} kwargs={kwargs} error={e}.")
+            if reraise:
+                raise e
 
     return async_wrapper if iscoroutinefunction(func) else wrapper
+
+
+exception_logger_reraise = partial(exception_logger, reraise=True)
+exception_logger_silence = partial(exception_logger, reraise=False)

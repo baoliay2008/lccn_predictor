@@ -9,7 +9,7 @@ from loguru import logger
 from app.crawler.contest import fill_questions_field, save_all_contests
 from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import epoch_time_to_utc_datetime, get_contest_start_time, exception_logger
+from app.utils import epoch_time_to_utc_datetime, get_contest_start_time, exception_logger_reraise
 
 
 async def save_question_finish_count(
@@ -90,7 +90,6 @@ async def aggregate_rank_at_time_point(
     return rank_map, raw_rank
 
 
-@exception_logger
 async def save_real_time_rank(
     contest_name: str,
     delta_minutes: int = 1,
@@ -137,6 +136,7 @@ async def save_real_time_rank(
     logger.success(f"finished updating real_time_rank for contest_name={contest_name}")
 
 
+@exception_logger_reraise
 async def save_submission(
         contest_name: str,
         user_rank_list: List[Dict],

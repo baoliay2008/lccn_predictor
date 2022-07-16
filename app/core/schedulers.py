@@ -10,12 +10,13 @@ from app.constant import WEEKLY_CONTEST_START, BIWEEKLY_CONTEST_START, WEEKLY_CO
 from app.core.predictor import predict_contest
 from app.crawler.contest import save_all_contests
 from app.crawler.contest_records import save_archive_contest_records, save_predict_contest_records
-from app.utils import get_passed_weeks
+from app.utils import get_passed_weeks, exception_logger_reraise
 
 
 global_scheduler: Optional[AsyncIOScheduler] = None
 
 
+@exception_logger_reraise
 async def save_last_two_contest_records() -> None:
     """
     update last weekly contest, and biweekly contest if exists.
@@ -34,14 +35,13 @@ async def save_last_two_contest_records() -> None:
     last_biweekly_contest_name = f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
     logger.info(f"last_biweekly_contest_name={last_biweekly_contest_name} update archive contests")
     await save_archive_contest_records(contest_name=last_biweekly_contest_name)
-    logger.success("finished update_last_two_contests_users")
 
 
+@exception_logger_reraise
 async def composed_predict_jobs(contest_name: str) -> None:
     await save_predict_contest_records(contest_name=contest_name)
     await predict_contest(contest_name=contest_name)
     await save_archive_contest_records(contest_name=contest_name, save_users=False)
-    logger.success("finished")
 
 
 async def add_prediction_schedulers(contest_name: str) -> None:
@@ -81,7 +81,7 @@ async def scheduler_entry() -> None:
         logger.info(f"parsed contest_name={contest_name}")
         await add_prediction_schedulers(contest_name)
     elif (
-            2 <= time_point.weekday <= 6  # Wednesday, Tuesday, Friday and Saturday 00:00
+            2 <= time_point.weekday <= 5  # Wednesday, Tuesday, Friday and Saturday 00:00
             and time_point.hour == 0
             and time_point.minute == 0
     ):

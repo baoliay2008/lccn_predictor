@@ -144,6 +144,7 @@ async def contest_questions_finished_list(
         contest_name: str = Body(embed=True),
 ):
     logger.info(f"request.client={request.client}")
+    data = [["Minute", "Question", "Count"]]
     contest = await Contest.find_one(
         Contest.titleSlug == contest_name,
         )
@@ -153,9 +154,11 @@ async def contest_questions_finished_list(
     questions = contest.questions
     if not questions:
         logger.error(f"questions = {questions}, no data now")
+        return {
+            "real_time_count": data
+        }
     questions.sort(key=lambda q: q.credit)
     logger.debug(f"questions={questions}")
-    data = [["Minute", "Question", "Count"]]
     for i, question in enumerate(questions):
         data.extend(
             [
