@@ -1,39 +1,17 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <link rel="shortcut icon" href="{{url_for('static', path='/images/increase-32px.png')}}" type="image/png" />
 
-    <link rel="stylesheet" href="{{url_for('static', path='/css/styles.css')}}">
+{% block head %}
+    {{ super() }}
+{% endblock %}
 
-    <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-    <!--Import materialize.css-->
-    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/css/materialize.min.css">
+{% block header %}
+    {{ super() }}
+{% endblock %}
 
-    <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</head>
 
-<body>
-
-    <header>
-        <nav class="black">
-            <div class="nav-wrapper">
-                <a href="/" class="brand-logo left"><i class="large material-icons" style="margin-left: 20px">home</i></a>
-                <ul id="nav-mobile" class="right ">
-                    <li><a href="https://github.com/baoliay2008/lccn_predictor">Github</a></li>
-                    <li><a href="https://leetcode.cn/contest/">LCCN</a></li>
-                    <li><a href="https://leetcode.com/contest/">LCUS</a></li>
-                </ul>
-            </div>
-        </nav>
-
-        <title>LCCN Predictor</title>
-    </header>
-
-    <main>
+{% block main %}
         <div class="container centered" style="text-align: center; font-size: 20px; margin-bottom:80px;">
             <div class="col s8 offset-s2">
                 Leetcode Contest Rating Predictor
@@ -65,46 +43,27 @@
                 {% endfor %}
             </tbody>
         </table>
-    </main>
 
-    <footer class="page-footer black">
-        <div class="container">
+{% endblock %}
+
+
+{% block submain %}
+        <div class="container centered" >
             <div class="row">
-                <div class="col l6 s12">
-                    <h5 class="white-text">LCCN Predictor</h5>
-                    <p class="grey-text text-lighten-4">Leetcode weekly and biweekly contest rating predictor.</p>
-                    <a class="waves-effect waves-light btn blue lighten-2" href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20lccn.lbao.site">
-                        <i class="material-icons left">share</i>twitter
-                    </a>
-<!--                    <a class="twitter-share-button" data-show-count="false" data-size="large"-->
-<!--                        href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20lccn.lbao.site">Share-->
-<!--                    </a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>-->
-
-                </div>
-                <div class="col l4 offset-l2 s12">
-                    <h5 class="white-text">Links</h5>
-                    <ul>
-                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor">Source Code</a></li>
-                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/issues">Issues</a></li>
-                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/pulls">Pull Requests</a></li>
-                        <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/blob/main/LICENSE">License</a></li>
-<!--                        <li>-->
-<!--                            <a class="github-button right" href="https://github.com/baoliay2008" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-size="large" aria-label="Follow @baoliay2008 on GitHub">Follow @baoliay2008</a>-->
-<!--                        </li>-->
-                    </ul>
+                <div class="col s8 offset-s2 m6 offset-m3 l4 offset-l4 ">
+                    <script type="text/javascript" id="clstr_globe" src="//clustrmaps.com/globe.js?d=WC5k8U1lbWgv7AVKejwjSiALukQmBxtw4Jzqa95QZF8"></script>
                 </div>
             </div>
         </div>
-        <div class="footer-copyright">
-            <div class="container">
-                © 2022 Copyright Li Bao.
-                <a class="grey-text text-lighten-4 right" href="https://github.com/baoliay2008">Every hero has a code :)</a>
-            </div>
-        </div>
-    </footer>
-</body>
+{% endblock %}
 
-    <script src="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/js/materialize.min.js"></script>
-<!--    <script async defer src="https://buttons.github.io/buttons.js"></script>-->
 
-</html>
+{% block footer %}
+    {{ super() }}
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+{% endblock %}
+

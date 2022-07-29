@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        {% block head %}
+        <link rel="shortcut icon" href="{{url_for('static', path='/images/increase-32px.png')}}" type="image/png" />
+
+        <link rel="stylesheet" href="{{url_for('static', path='/css/styles.css')}}">
+
+        <!--Import Google Icon Font-->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+        <!--Import materialize.css-->
+        <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/css/materialize.min.css">
+
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>LCCN Predictor</title>
+        {% endblock %}
+    </head>
+
+    <body>
+        <header>
+            {% block header %}
+            <nav class="black">
+                <div class="nav-wrapper">
+                    <a href="/" class="brand-logo left"><i class="large material-icons" style="margin-left: 20px">home</i></a>
+                    <ul id="nav-mobile" class="right ">
+                        <li><a href="https://github.com/baoliay2008/lccn_predictor">Github</a></li>
+                        <li><a href="https://leetcode.cn/contest/">LCCN</a></li>
+                        <li><a href="https://leetcode.com/contest/">LCUS</a></li>
+                    </ul>
+                </div>
+            </nav>
+            {% endblock %}
+        </header>
+
+        <main>
+        {% block main %}{% endblock %}
+        </main>
+
+        {% block submain %}{% endblock %}
+
+        <footer class="page-footer black">
+            {% block footer %}
+            <div class="container">
+                <div class="row">
+                    <div class="col l6 s12">
+                        <h5 class="white-text">LCCN Predictor</h5>
+                        <p class="grey-text text-lighten-4">Leetcode weekly and biweekly contest rating predictor.</p>
+                        <a href="https://twitter.com/intent/tweet?text=Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20lccn.lbao.site">
+                            <img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white">
+                        </a>
+                    </div>
+                    <div class="col l4 offset-l2 s12">
+                        <h5 class="white-text">Links</h5>
+                        <ul>
+                            <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor">
+                                <img src="https://img.shields.io/github/last-commit/baoliay2008/lccn_predictor" alt="Last Commit">
+                            </a></li>
+                            <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/issues">
+                                <img src="https://img.shields.io/github/issues/baoliay2008/lccn_predictor" alt="Issues">
+                            </a></li>
+                            <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/pulls">
+                                <img src="https://img.shields.io/github/issues-pr/baoliay2008/lccn_predictor" alt="Pull Requests">
+                            </a></li>
+                            <li><a class="grey-text text-lighten-3" href="https://github.com/baoliay2008/lccn_predictor/blob/main/LICENSE">
+                                <img src="https://img.shields.io/github/license/baoliay2008/lccn_predictor" alt="License">
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                <div class="container">
+                    © 2022 Copyright L. Bao.
+                    <a class="grey-text text-lighten-4 right" href="https://github.com/baoliay2008">Every hero has a code :)</a>
+                </div>
+            </div>
+            {% endblock %}
+        </footer>
+    </body>
+
+    {% block scripts %}
+    <script src="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/js/materialize.min.js"></script>
+    {% endblock %}
+
+</html>
