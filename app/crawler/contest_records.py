@@ -42,7 +42,7 @@ async def request_contest_ranking(
         res_dict = res.json()
         user_rank_list.extend(res_dict.get("total_rank"))
         nested_submission_list.extend(res_dict.get("submissions"))
-    logger.info("finished")
+    logger.success("finished")
     return user_rank_list, nested_submission_list, questions_list
 
 
@@ -55,7 +55,6 @@ async def save_predict_contest_records(
             User.username == _user_rank.username,
             User.data_region == _user_rank.data_region,
         )
-        # TODO: why user is None here?
         _user_rank.old_rating = user.rating
         _user_rank.attendedContestsCount = user.attendedContestsCount
         await _user_rank.save()
@@ -66,7 +65,14 @@ async def save_predict_contest_records(
     await ContestRecordPredict.find(
         ContestRecordPredict.contest_name == contest_name,
     ).delete()
+    unique_keys = set()
     for user_rank_dict in user_rank_list:
+        key = (user_rank_dict["data_region"], user_rank_dict["username"])
+        if key in unique_keys:
+            # during the contest, request_contest_ranking may return duplicated records (user ranking is changing)
+            logger.warning(f"duplicated user record. {user_rank_dict=}")
+            continue
+        unique_keys.add(key)
         user_rank_dict.update({"contest_name": contest_name})
         user_rank = ContestRecordPredict.parse_obj(user_rank_dict)
         user_rank_objs.append(user_rank)

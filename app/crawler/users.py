@@ -21,7 +21,7 @@ async def multi_upsert_user(
     for response, contest_record in zip(graphql_response_list, multi_request_list):
         try:
             data = response.json().get("data", {}).get("userContestRanking")
-            logger.debug(f"contest_record={contest_record}, data={data}")
+            logger.info(f"contest_record={contest_record}, data={data}")
             if data is None:
                 logger.info(f"new user found, contest_record={contest_record}. graphql data is None")
                 data = copy.copy(DEFAULT_NEW_USER_CONTEST_INFO)
@@ -108,7 +108,7 @@ async def multi_request_user_us(
             }
             for contest_record in us_multi_request_list
         },
-        concurrent_num=20,
+        concurrent_num=10,
     )
     await multi_upsert_user(us_response_list, us_multi_request_list)
     us_multi_request_list.clear()
