@@ -7,7 +7,7 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
-from app.constant import DEFAULT_NEW_USER_CONTEST_INFO
+from app.constants import DEFAULT_NEW_USER_CONTEST_INFO
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordArchive, User, ContestRecordPredict
 from app.utils import exception_logger_reraise

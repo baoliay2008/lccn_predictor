@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from loguru import logger
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from app.constant import WEEKLY_CONTEST_START, BIWEEKLY_CONTEST_START, WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE, \
+from app.constants import WEEKLY_CONTEST_START, BIWEEKLY_CONTEST_START, WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE, \
     CronTimePointWkdHrMin
 from app.core.predictor import predict_contest
 from app.crawler.contest import save_all_contests
@@ -24,11 +24,11 @@ async def save_last_two_contest_records() -> None:
     :return:
     """
     utc = datetime.utcnow()
-    weekly_passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.datetime)
+    weekly_passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.dt)
     last_weekly_contest_name = f"weekly-contest-{weekly_passed_weeks + WEEKLY_CONTEST_BASE.num}"
     logger.info(f"last_weekly_contest_name={last_weekly_contest_name} update archive contests")
     await save_archive_contest_records(contest_name=last_weekly_contest_name)
-    biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.datetime)
+    biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.dt)
     if biweekly_passed_weeks % 2 != 0:
         logger.info(f"will not update last biweekly users, passed_weeks={biweekly_passed_weeks} is odd for now={utc}")
         return
@@ -68,12 +68,12 @@ async def scheduler_entry() -> None:
     utc = datetime.utcnow()
     time_point = CronTimePointWkdHrMin(utc.weekday(), utc.hour, utc.minute)
     if time_point == WEEKLY_CONTEST_START:
-        passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.datetime)
+        passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.dt)
         contest_name = f"weekly-contest-{passed_weeks + WEEKLY_CONTEST_BASE.num}"
         logger.info(f"parsed contest_name={contest_name}")
         await add_prediction_schedulers(contest_name)
     elif time_point == BIWEEKLY_CONTEST_START:
-        passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.datetime)
+        passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.dt)
         if passed_weeks % 2 != 0:
             logger.info(f"will not run biweekly prediction, passed_weeks={passed_weeks} is odd for now={utc}")
             return

@@ -7,7 +7,7 @@ from typing import Callable, Any
 
 from loguru import logger
 
-from app.constant import WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE
+from app.constants import WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE
 
 
 def epoch_time_to_utc_datetime(epoch_time: int) -> datetime:
@@ -21,11 +21,11 @@ def get_passed_weeks(t: datetime, base_t: datetime) -> int:
 def get_contest_start_time(contest_name: str) -> datetime:
     contest_num = int(contest_name.split("-")[-1])
     if contest_name.lower().startswith("weekly"):
-        start_time = WEEKLY_CONTEST_BASE.datetime + timedelta(
+        start_time = WEEKLY_CONTEST_BASE.dt + timedelta(
             weeks=contest_num - WEEKLY_CONTEST_BASE.num
         )
     else:
-        start_time = BIWEEKLY_CONTEST_BASE.datetime + timedelta(
+        start_time = BIWEEKLY_CONTEST_BASE.dt + timedelta(
             weeks=(contest_num - BIWEEKLY_CONTEST_BASE.num) * 2
         )
     logger.info(f"contest_name={contest_name} start_time={start_time}")
