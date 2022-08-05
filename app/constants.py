@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import NamedTuple
+from typing import NamedTuple, Final
 
-DEFAULT_NEW_USER_CONTEST_INFO = {  # will not have mutable values, just use `copy.copy()` is OK.
-    "attendedContestsCount": 0,
-    "rating": 1500.0,
-}
+
+DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT: Final[int] = 0
+DEFAULT_NEW_USER_RATING: Final[float] = 1500.0
 
 
 class CronTimePointWkdHrMin(NamedTuple):

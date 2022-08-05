@@ -7,7 +7,7 @@ from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
 
-from app.constants import DEFAULT_NEW_USER_CONTEST_INFO
+from app.constants import DEFAULT_NEW_USER_RATING, DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT
 from app.crawler.utils import multi_http_request
 from app.db.models import ContestRecordArchive, User, ContestRecordPredict
 from app.utils import exception_logger_reraise
@@ -24,13 +24,17 @@ async def multi_upsert_user(
             logger.info(f"contest_record={contest_record}, data={data}")
             if data is None:
                 logger.info(f"new user found, contest_record={contest_record}. graphql data is None")
-                data = copy.copy(DEFAULT_NEW_USER_CONTEST_INFO)
+                attended_contests_count = DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT
+                rating = DEFAULT_NEW_USER_RATING
+            else:
+                attended_contests_count = data["attendedContestsCount"]
+                rating = data["rating"]
             user = User(
                 username=contest_record.username,
                 user_slug=contest_record.user_slug,
                 data_region=contest_record.data_region,
-                attendedContestsCount=data["attendedContestsCount"],
-                rating=data["rating"],
+                attendedContestsCount=attended_contests_count,
+                rating=rating,
             )
         except Exception as e:
             # This is a bug that will cause **inaccurate prediction**, because missing user in User collection
@@ -108,7 +112,7 @@ async def multi_request_user_us(
             }
             for contest_record in us_multi_request_list
         },
-        concurrent_num=10,
+        concurrent_num=5,
     )
     await multi_upsert_user(us_response_list, us_multi_request_list)
     us_multi_request_list.clear()
