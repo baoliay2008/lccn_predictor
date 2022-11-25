@@ -16,7 +16,6 @@
         <!--Let browser know website is optimized for mobile-->
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <title>LCCN Predictor</title>
         {% endblock %}
     </head>
 
@@ -84,6 +83,16 @@
 
     {% block scripts %}
     <script src="https://cdn.bootcdn.net/ajax/libs/materialize/1.0.0-rc.2/js/materialize.min.js"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VE7R379Q6W"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VE7R379Q6W');
+    </script>
+
     {% endblock %}
 
 </html>
