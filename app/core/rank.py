@@ -16,6 +16,12 @@ async def save_question_finish_count(
         contest_name: str,
         delta_minutes: int = 1
 ) -> None:
+    """
+    For every delta_minutes, count accepted submissions for each question.
+    :param contest_name:
+    :param delta_minutes:
+    :return:
+    """
     contest: Contest = await Contest.find_one(
         Contest.titleSlug == contest_name,
     )
@@ -24,7 +30,7 @@ async def save_question_finish_count(
     end_time = start_time + timedelta(minutes=90)
     while (start_time := start_time + timedelta(minutes=delta_minutes)) <= end_time:
         time_series.append(start_time)
-    logger.info(f"contest_name={contest_name} time_series={time_series}")
+    logger.info(f"{contest_name=} {time_series=}")
     for question in contest.questions:
         tasks = (
             Submission.find(
@@ -43,7 +49,14 @@ async def aggregate_rank_at_time_point(
     contest_name: str,
     time_point: datetime,
 ) -> Tuple[Dict[Tuple[str, str], int], int]:
-    col = get_async_mongodb_collection(Submission.__name__)
+    """
+    For a single time_point, rank all the participants.
+    Be careful that every wrong submission should add a 5-minutes penalty.
+    :param contest_name:
+    :param time_point:
+    :return:
+    """
+    col = get_async_mongodb_collection(Submission.__name__)  # hard to use beanie here, so use raw MongoDB aggregation
     rank_map = dict()
     last_credit_sum = math.inf
     last_penalty_date = epoch_time_to_utc_datetime(0)
@@ -94,6 +107,13 @@ async def save_real_time_rank(
     contest_name: str,
     delta_minutes: int = 1,
 ) -> None:
+    """
+    For every delta_minutes, invoke `aggregate_rank_at_time_point` function to get ranking on single time_point
+    Then append every user's ranking to a list and save it
+    :param contest_name:
+    :param delta_minutes:
+    :return:
+    """
     logger.info(f"started running real_time_rank update function")
     users: List[ProjectionUniqueUser] = (
         await ContestRecordArchive.find(
@@ -133,7 +153,7 @@ async def save_real_time_rank(
         for (username, data_region), rank_list in real_time_rank_map.items()
     )
     await asyncio.gather(*tasks)
-    logger.success(f"finished updating real_time_rank for contest_name={contest_name}")
+    logger.success(f"finished updating real_time_rank for {contest_name=}")
 
 
 @exception_logger_reraise
@@ -143,6 +163,14 @@ async def save_submission(
         nested_submission_list: List[Dict],
         questions_list: List[Dict],
 ) -> None:
+    """
+    Save all of the submission-related data to MongoDB
+    :param contest_name:
+    :param user_rank_list:
+    :param nested_submission_list:
+    :param questions_list:
+    :return:
+    """
     time_point = datetime.utcnow()
     await save_all_contests()
     await fill_questions_field(contest_name, questions_list)

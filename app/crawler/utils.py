@@ -11,6 +11,16 @@ async def multi_http_request(
     concurrent_num: int = 5,
     retry_num: int = 10,
 ) -> List[Optional[httpx.Response]]:
+    """
+    Simple HTTP requests queue with speed control and retry automatically, hopefully can get corresponding response.
+    Failed response would be `None` but not a `response` object.
+    Notice that `multi_requests` is `Dict` but not `Sequence` so that data accessing would be easier.
+    Because all the stuff are in memory, so DO NOT pass a long `multi_requests` in especially when `response` is huge.
+    :param multi_requests:
+    :param concurrent_num:
+    :param retry_num:
+    :return:
+    """
     response_mapper = defaultdict(int)  # values means: [int: retried time / Response: successful result]
     crawler_queue = deque(multi_requests.items())
     total_num = len(crawler_queue)
@@ -23,7 +33,7 @@ async def multi_http_request(
         while len(requests_list) < concurrent_num and crawler_queue:
             key, request = crawler_queue.popleft()
             if response_mapper[key] >= retry_num:
-                logger.error(f"request reached max retry_num. key={key}, req={multi_requests[key]}")
+                logger.error(f"request reached max retry_num. {key=}, req={multi_requests[key]}")
                 continue
             requests_list.append((key, request))
         if not requests_list:
@@ -41,8 +51,7 @@ async def multi_http_request(
                     response_mapper[key] = response
                 else:
                     # response could be an Exception here
-                    logger.warning(f"multi_http_request error: "
-                                   f"request={request} "
+                    logger.warning(f"multi_http_request error: {request=} "
                                    f"{response.status_code if isinstance(response, httpx.Response) else response}")
                     response_mapper[key] += 1
                     wait_time += 1

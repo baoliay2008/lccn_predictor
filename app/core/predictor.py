@@ -12,18 +12,23 @@ from app.utils import exception_logger_reraise
 
 
 @lru_cache
-def pre_sum_of_sigma(k):
+def pre_sum_of_sigma(k: int) -> float:
+    """
+    Series cache
+    :param k:
+    :return:
+    """
     if k < 0:
-        raise ValueError(f"k={k}, pre_sum's index less than zero!")
+        raise ValueError(f"{k=}, pre_sum's index less than zero!")
     return (5 / 7) ** k + pre_sum_of_sigma(k-1) if k >= 1 else 1
 
 
 @lru_cache
-def fk_for_delta_coefficient(k):
+def adjustment_for_delta_coefficient(k: int) -> float:
     """
-    this function could `return 1 / (1 + sum((5 / 7) ** i for i in range(k + 1)))` directly,
-    but use a `pre_sum_of_sigma`(which is also cached) function is faster.
-    when k is big enough, result approximately equal to 2/9.
+    This function could also be `return 1 / (1 + sum((5 / 7) ** i for i in range(k + 1)))`
+    but use a `pre_sum_of_sigma` function(which is also cached) is faster.
+    When k is big enough, result approximately equals to 2/9.
     :param k:
     :return:
     """
@@ -31,9 +36,14 @@ def fk_for_delta_coefficient(k):
 
 
 @jit(nopython=True, fastmath=True, parallel=True)
-def expected_win_rate(vector, scalar):
-    # test result had shown this function has a quite decent performance.
-    # TODO: write a benchmark note.
+def expected_win_rate(vector: np.ndarray, scalar: float) -> np.ndarray:
+    """
+    Test result had shown this function has a quite decent performance.
+    TODO: write a benchmark note.
+    :param vector:
+    :param scalar:
+    :return:
+    """
     return 1 / (1 + np.power(10, (scalar - vector) / 400))
 
 
@@ -48,7 +58,7 @@ async def predict_contest(
     """
     # update_user_using_prediction is True for biweekly contests because next day's weekly contest needs the latest info
     update_user_using_prediction = contest_name.lower().startswith("bi")
-    logger.info(f"start run predict_contest, update_user_using_prediction={update_user_using_prediction}")
+    logger.info(f"start run predict_contest, {update_user_using_prediction=}")
     records = (
         await ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
@@ -84,7 +94,7 @@ async def predict_contest(
                 lo = mid
             max_iteration -= 1
         expected_rating = mid
-        coefficient_of_delta = fk_for_delta_coefficient(k_array[i])
+        coefficient_of_delta = adjustment_for_delta_coefficient(k_array[i])
         expected_rating_list.append(expected_rating)
         coefficient_of_delta_list.append(coefficient_of_delta)
     logger.info("end loop for calculating expected_rating")
@@ -106,7 +116,7 @@ async def predict_contest(
     await asyncio.gather(*tasks)
     logger.success(f"predict_contest finished updating ContestRecordPredict")
     if update_user_using_prediction:
-        logger.info(f"immediately write predicted result back into User collection.")
+        logger.info(f"immediately write predicted result back into User collection")
         tasks = (
             User.find_one(
                 User.username == record.username,

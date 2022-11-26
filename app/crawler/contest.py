@@ -15,16 +15,22 @@ async def multi_upsert_contests(
     contests: List[Dict],
     past: bool,
 ) -> None:
+    """
+    Save meta data of Contests into MongoDB
+    :param contests:
+    :param past:
+    :return:
+    """
     tasks = list()
     for contest_dict in contests:
         try:
             contest_dict["past"] = past
             contest_dict["endTime"] = contest_dict["startTime"] + contest_dict["duration"]
-            logger.info(f"contest_dict = {contest_dict}")
+            logger.debug(f"{contest_dict=}")
             contest = Contest.parse_obj(contest_dict)
-            logger.info(contest)
+            logger.debug(f"{contest=}")
         except Exception as e:
-            logger.exception(f"parse contest_dict error {e}. skip upsert {contest_dict}")
+            logger.exception(f"parse contest_dict error {e}. skip upsert {contest_dict=}")
             continue
         tasks.append(
             Contest.find_one(
@@ -45,7 +51,14 @@ async def multi_upsert_contests(
     logger.success("finished")
 
 
-async def multi_request_past_contests(max_page_num: int) -> List[Dict]:
+async def multi_request_past_contests(
+        max_page_num: int,
+) -> List[Dict]:
+    """
+    Fetch past contests information
+    :param max_page_num:
+    :return:
+    """
     response_list = await multi_http_request(
         {
             page_num: {
@@ -76,6 +89,10 @@ async def multi_request_past_contests(max_page_num: int) -> List[Dict]:
 
 
 async def save_past_contests() -> None:
+    """
+    Save past contests
+    :return:
+    """
     contest_page_text = httpx.get("https://leetcode.com/contest/").text
     max_page_num_search = re.search(
         re.compile(r'"pageNum":\s*(\d+)'),
@@ -91,6 +108,10 @@ async def save_past_contests() -> None:
 
 
 async def save_top_two_contests() -> None:
+    """
+    save two coming contests
+    :return:
+    """
     contest_page_text = httpx.get("https://leetcode.com/contest/").text
     build_id_search = re.search(
         re.compile(r'"buildId":\s*"(.*?)",'),
@@ -112,19 +133,32 @@ async def save_top_two_contests() -> None:
     if not top_two_contests:
         logger.error("cannot find topTwoContests")
         return
-    logger.info(top_two_contests)
+    logger.info(f"{top_two_contests=}")
     await multi_upsert_contests(top_two_contests, past=False)
     logger.success("finished")
 
 
 @exception_logger_reraise
 async def save_all_contests() -> None:
+    """
+    Save past contests and top two coming contests
+    :return:
+    """
     await save_top_two_contests()
     await save_past_contests()
     logger.success("finished")
 
 
-async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None:
+async def fill_questions_field(
+        contest_name: str,
+        questions: List[Dict]
+) -> None:
+    """
+    For the past contests, fetch questions list and fill into MongoDB
+    :param contest_name:
+    :param questions:
+    :return:
+    """
     try:
         question_objs = list()
         for question in questions:
@@ -141,5 +175,5 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
         logger.success("finished")
     except Exception as e:
         logger.error(
-            f"failed to fill questions fields for contest_name={contest_name} questions={questions} e={e}"
+            f"failed to fill questions fields for {contest_name=} {questions=} {e=}"
         )

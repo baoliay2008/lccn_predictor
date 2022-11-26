@@ -19,6 +19,14 @@ def get_passed_weeks(t: datetime, base_t: datetime) -> int:
 
 
 def get_contest_start_time(contest_name: str) -> datetime:
+    """
+    It's a simple, bold, but EFFECTIVE conjecture here, take two baselines separately,
+    then from the expected `contest_name` calculate its start time, just let it run on server periodically, no bother.
+    It's just unnecessary to use dynamic configuration things instead.
+    This conjecture worked precisely in the past, hopefully will still work well in the future.
+    :param contest_name:
+    :return:
+    """
     contest_num = int(contest_name.split("-")[-1])
     if contest_name.lower().startswith("weekly"):
         start_time = WEEKLY_CONTEST_BASE.dt + timedelta(
@@ -56,7 +64,13 @@ def start_loguru(process: str = "main") -> None:
         sys.exit(1)
 
 
-def exception_logger(func: Callable[..., Any], reraise: bool):
+def exception_logger(func: Callable[..., Any], reraise: bool) -> Callable[..., Any]:
+    """
+    A decorator to write logs and try-catch for the key functions you want to keep eyes on.
+    :param func:
+    :param reraise:
+    :return:
+    """
     @wraps(func)
     async def async_wrapper(*args, **kwargs):
         try:

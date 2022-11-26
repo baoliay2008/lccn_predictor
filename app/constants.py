@@ -31,6 +31,7 @@ class SingleContestDatetime(NamedTuple):
     dt: datetime
 
 
+# Take "weekly-contest-294" and "biweekly-contest-78" as two baselines
 WEEKLY_CONTEST_BASE = SingleContestDatetime(
     294,
     datetime(2022, 5, 22, 2, 30),

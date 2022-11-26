@@ -1,5 +1,4 @@
 import asyncio
-import copy
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -17,13 +16,19 @@ async def multi_upsert_user(
         graphql_response_list: List[Optional[httpx.Response]],
         multi_request_list: List[ContestRecordPredict | ContestRecordArchive],
 ) -> None:
+    """
+    Update or insert user information into `User` collection concurrently
+    :param graphql_response_list:
+    :param multi_request_list:
+    :return:
+    """
     update_tasks = list()
     for response, contest_record in zip(graphql_response_list, multi_request_list):
         try:
             data = response.json().get("data", {}).get("userContestRanking")
-            logger.info(f"contest_record={contest_record}, data={data}")
+            logger.info(f"{contest_record=}, {data=}")
             if data is None:
-                logger.info(f"new user found, contest_record={contest_record}. graphql data is None")
+                logger.info(f"new user found, {contest_record=}. graphql data is None")
                 attended_contests_count = DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT
                 rating = DEFAULT_NEW_USER_RATING
             else:
@@ -42,7 +47,7 @@ async def multi_upsert_user(
             # possible reasons:
             # 1. `response` could be `None` because failed times reached `retry_num` in `multi_http_request` function.
             # 2. graphql result userContestRanking doesn't have `attendedContestsCount` or `rating` key.
-            logger.exception(f"user parse error. response={response} contest_record={contest_record} Exception={e}")
+            logger.exception(f"user parse error. {response=} {contest_record=} Exception={e}")
             continue
         update_tasks.append(
             User.find_one(
@@ -65,6 +70,11 @@ async def multi_upsert_user(
 async def multi_request_user_cn(
         cn_multi_request_list: List[ContestRecordPredict | ContestRecordArchive],
 ) -> None:
+    """
+    Fetch user information from leetcode.cn (data_region = "CN")
+    :param cn_multi_request_list:
+    :return:
+    """
     cn_response_list = await multi_http_request(
         {
             contest_record.user_slug: {
@@ -93,6 +103,11 @@ async def multi_request_user_cn(
 async def multi_request_user_us(
         us_multi_request_list: List[ContestRecordPredict | ContestRecordArchive],
 ) -> None:
+    """
+    Fetch user information from leetcode.com (data_region = "US")
+    :param us_multi_request_list:
+    :return:
+    """
     us_response_list = await multi_http_request(
         {
             contest_record.username: {
@@ -124,6 +139,15 @@ async def save_users_of_contest(
         predict: bool,
         concurrent_num: int = 200,
 ) -> None:
+    """
+    Save all users' information
+    Control the fetch speed by using a MongoDB cursor and concurrent batch size
+    Notice that `predict: bool` denotes which collection should be chosen
+    :param contest_name:
+    :param predict:
+    :param concurrent_num:
+    :return:
+    """
     if predict:
         to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
@@ -143,13 +167,10 @@ async def save_users_of_contest(
             User.data_region == contest_record.data_region,
             User.update_time > datetime.utcnow() - timedelta(hours=36),  # skip if user was updated in last 36 hours.
         ) is not None:
-            logger.info(f"user was updated in last three days, won't update. "
-                        f"contest_record = {contest_record} ")
+            logger.info(f"user was updated in last three days, won't update. {contest_record=}")
             continue
         if len(cn_multi_request_list) + len(us_multi_request_list) >= concurrent_num:
-            logger.trace(f"for loop run multi_request_list "
-                         f"cn_multi_request_list={cn_multi_request_list} "
-                         f"us_multi_request_list={us_multi_request_list}")
+            logger.trace(f"for loop run multi_request_list {cn_multi_request_list=} {us_multi_request_list=}")
             await asyncio.gather(
                 multi_request_user_cn(cn_multi_request_list),
                 multi_request_user_us(us_multi_request_list),
@@ -159,10 +180,8 @@ async def save_users_of_contest(
         elif contest_record.data_region == "US":
             us_multi_request_list.append(contest_record)
         else:
-            logger.critical(f"fatal error: data_region is not CN or US. contest_record={contest_record}")
-    logger.trace(f"rest of run run multi_request_list "
-                 f"cn_multi_request_list={cn_multi_request_list} "
-                 f"us_multi_request_list={us_multi_request_list}")
+            logger.critical(f"fatal error: data_region is not CN or US. {contest_record=}")
+    logger.trace(f"rest of run run multi_request_list {cn_multi_request_list=} {us_multi_request_list=}")
     await asyncio.gather(
         multi_request_user_cn(cn_multi_request_list),
         multi_request_user_us(us_multi_request_list),

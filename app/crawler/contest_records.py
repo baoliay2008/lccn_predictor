@@ -17,6 +17,11 @@ from app.utils import exception_logger_reraise
 async def request_contest_ranking(
     contest_name: str,
 ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+    """
+    Fetch all ranking records of a contest by sending http request per page concurrently
+    :param contest_name:
+    :return:
+    """
     logger.info("start")
     req = httpx.get(
         f"https://leetcode.com/contest/api/ranking/{contest_name}/",
@@ -50,6 +55,11 @@ async def request_contest_ranking(
 async def save_predict_contest_records(
     contest_name: str,
 ) -> None:
+    """
+    Save fetched contest records into `ContestRecordPredict` collection for predicting new contest
+    :param contest_name:
+    :return:
+    """
     async def _fill_old_rating_and_count(_user_rank: ContestRecordPredict):
         user = await User.find_one(
             User.username == _user_rank.username,
@@ -93,6 +103,12 @@ async def save_archive_contest_records(
         contest_name: str,
         save_users: bool = True,
 ) -> None:
+    """
+    Save fetched contest records into `ContestRecordArchive` collection for archiving old contests
+    :param contest_name:
+    :param save_users:
+    :return:
+    """
     time_point = datetime.utcnow()
     user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
     user_rank_objs = list()
@@ -125,5 +141,5 @@ async def save_archive_contest_records(
     if save_users is True:
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
-        logger.info(f"save_users={save_users}, will not save users")
+        logger.info(f"{save_users=}, will not save users")
     await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
