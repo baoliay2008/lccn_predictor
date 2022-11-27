@@ -1,13 +1,13 @@
-import sys
 import math
-from functools import wraps, partial
+import sys
 from asyncio import iscoroutinefunction
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Any
+from functools import partial, wraps
+from typing import Any, Callable
 
 from loguru import logger
 
-from app.constants import WEEKLY_CONTEST_BASE, BIWEEKLY_CONTEST_BASE
+from app.constants import BIWEEKLY_CONTEST_BASE, WEEKLY_CONTEST_BASE
 
 
 def epoch_time_to_utc_datetime(epoch_time: int) -> datetime:
@@ -71,6 +71,7 @@ def exception_logger(func: Callable[..., Any], reraise: bool) -> Callable[..., A
     :param reraise:
     :return:
     """
+
     @wraps(func)
     async def async_wrapper(*args, **kwargs):
         try:

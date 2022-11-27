@@ -2,16 +2,26 @@ import sys
 import urllib.parse
 from typing import Optional
 
-from loguru import logger
-from motor.motor_asyncio import AsyncIOMotorClient
-from motor.core import AgnosticClient, AgnosticCollection, AgnosticDatabase  # bad idea to use these three here,
 # just for temporary autocompleting, given that motor doesn't have type annotations yet,
 # see https://jira.mongodb.org/browse/MOTOR-331
 # and https://www.mongodb.com/community/forums/t/support-for-type-hint/107593
 from beanie import init_beanie
+from loguru import logger
+from motor.core import (  # bad idea to use these three here,
+    AgnosticClient,
+    AgnosticCollection,
+    AgnosticDatabase,
+)
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.config import get_yaml_config
-from app.db.models import Contest, ContestRecordPredict, ContestRecordArchive, User, Submission
+from app.db.models import (
+    Contest,
+    ContestRecordArchive,
+    ContestRecordPredict,
+    Submission,
+    User,
+)
 
 async_mongodb_client = None
 
@@ -85,9 +95,5 @@ async def start_async_mongodb() -> None:
         )
         logger.success("started mongodb connection")
     except Exception as e:
-        logger.exception(
-            f"Failed to start mongodb. error={e}"
-        )
+        logger.exception(f"Failed to start mongodb. error={e}")
         sys.exit(1)
-
-

@@ -1,9 +1,9 @@
-from typing import List, Dict, Optional
-from collections import deque, defaultdict
-
-from loguru import logger
-import httpx
 import asyncio
+from collections import defaultdict, deque
+from typing import Dict, List, Optional
+
+import httpx
+from loguru import logger
 
 
 async def multi_http_request(
@@ -21,7 +21,9 @@ async def multi_http_request(
     :param retry_num:
     :return:
     """
-    response_mapper = defaultdict(int)  # values means: [int: retried time / Response: successful result]
+    response_mapper = defaultdict(
+        int
+    )  # values means: [int: retried time / Response: successful result]
     crawler_queue = deque(multi_requests.items())
     total_num = len(crawler_queue)
     # gradually adjust wait_time by detect number of failed requests in the last round.
@@ -33,13 +35,17 @@ async def multi_http_request(
         while len(requests_list) < concurrent_num and crawler_queue:
             key, request = crawler_queue.popleft()
             if response_mapper[key] >= retry_num:
-                logger.error(f"request reached max retry_num. {key=}, req={multi_requests[key]}")
+                logger.error(
+                    f"request reached max retry_num. {key=}, req={multi_requests[key]}"
+                )
                 continue
             requests_list.append((key, request))
         if not requests_list:
             break
-        logger.info(f"remaining={len(crawler_queue) / total_num * 100 :.2f}% wait_time={wait_time} "
-                    f"requests_list={[(key, response_mapper[key]) for key, request in requests_list]}")
+        logger.info(
+            f"remaining={len(crawler_queue) / total_num * 100 :.2f}% wait_time={wait_time} "
+            f"requests_list={[(key, response_mapper[key]) for key, request in requests_list]}"
+        )
         await asyncio.sleep(wait_time)
         async with httpx.AsyncClient() as client:
             tasks = [client.request(**request) for key, request in requests_list]
@@ -51,8 +57,10 @@ async def multi_http_request(
                     response_mapper[key] = response
                 else:
                     # response could be an Exception here
-                    logger.warning(f"multi_http_request error: {request=} "
-                                   f"{response.status_code if isinstance(response, httpx.Response) else response}")
+                    logger.warning(
+                        f"multi_http_request error: {request=} "
+                        f"{response.status_code if isinstance(response, httpx.Response) else response}"
+                    )
                     response_mapper[key] += 1
                     wait_time += 1
                     crawler_queue.append((key, request))

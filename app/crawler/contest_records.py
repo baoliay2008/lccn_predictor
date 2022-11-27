@@ -1,16 +1,16 @@
-from datetime import datetime
-from typing import List, Dict, Tuple
-from math import ceil
 import asyncio
+from datetime import datetime
+from math import ceil
+from typing import Dict, List, Tuple
 
-from loguru import logger
 import httpx
 from beanie.odm.operators.update.general import Set
+from loguru import logger
 
 from app.core.rank import save_submission
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
-from app.db.models import ContestRecordPredict, ContestRecordArchive, User
+from app.db.models import ContestRecordArchive, ContestRecordPredict, User
 from app.utils import exception_logger_reraise
 
 
@@ -60,6 +60,7 @@ async def save_predict_contest_records(
     :param contest_name:
     :return:
     """
+
     async def _fill_old_rating_and_count(_user_rank: ContestRecordPredict):
         user = await User.find_one(
             User.username == _user_rank.username,
@@ -93,15 +94,17 @@ async def save_predict_contest_records(
     await save_users_of_contest(contest_name=contest_name, predict=True)
     # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
     fill_tasks = (
-        _fill_old_rating_and_count(user_rank) for user_rank in user_rank_objs if user_rank.score != 0
+        _fill_old_rating_and_count(user_rank)
+        for user_rank in user_rank_objs
+        if user_rank.score != 0
     )
     await asyncio.gather(*fill_tasks)
 
 
 @exception_logger_reraise
 async def save_archive_contest_records(
-        contest_name: str,
-        save_users: bool = True,
+    contest_name: str,
+    save_users: bool = True,
 ) -> None:
     """
     Save fetched contest records into `ContestRecordArchive` collection for archiving old contests
@@ -110,7 +113,11 @@ async def save_archive_contest_records(
     :return:
     """
     time_point = datetime.utcnow()
-    user_rank_list, nested_submission_list, questions_list = await request_contest_ranking(contest_name)
+    (
+        user_rank_list,
+        nested_submission_list,
+        questions_list,
+    ) = await request_contest_ranking(contest_name)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -122,12 +129,14 @@ async def save_archive_contest_records(
             ContestRecordArchive.username == user_rank.username,
             ContestRecordArchive.data_region == user_rank.data_region,
         ).upsert(
-            Set({
-                ContestRecordArchive.rank: user_rank.rank,
-                ContestRecordArchive.score: user_rank.score,
-                ContestRecordArchive.finish_time: user_rank.finish_time,
-                ContestRecordArchive.update_time: user_rank.update_time,
-            }),
+            Set(
+                {
+                    ContestRecordArchive.rank: user_rank.rank,
+                    ContestRecordArchive.score: user_rank.score,
+                    ContestRecordArchive.finish_time: user_rank.finish_time,
+                    ContestRecordArchive.update_time: user_rank.update_time,
+                }
+            ),
             on_insert=user_rank,
         )
         for user_rank in user_rank_objs
@@ -142,4 +151,6 @@ async def save_archive_contest_records(
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
         logger.info(f"{save_users=}, will not save users")
-    await save_submission(contest_name, user_rank_list, nested_submission_list, questions_list)
+    await save_submission(
+        contest_name, user_rank_list, nested_submission_list, questions_list
+    )

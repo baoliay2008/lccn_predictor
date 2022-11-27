@@ -1,6 +1,5 @@
 from datetime import datetime
-from typing import NamedTuple, Final
-
+from typing import Final, NamedTuple
 
 DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT: Final[int] = 0
 DEFAULT_NEW_USER_RATING: Final[float] = 1500.0
@@ -15,7 +14,7 @@ class CronTimePointWkdHrMin(NamedTuple):
 # Observed that leetcode would update more user's result within 10 minutes after ending,
 # so safely set minute to 15 instead 0 in order to wait for final result.
 WEEKLY_CONTEST_START = CronTimePointWkdHrMin(
-    6,   # Sunday
+    6,  # Sunday
     2,  # hour
     30,  # minute
 )
@@ -40,4 +39,3 @@ BIWEEKLY_CONTEST_BASE = SingleContestDatetime(
     78,
     datetime(2022, 5, 14, 14, 30),
 )
-

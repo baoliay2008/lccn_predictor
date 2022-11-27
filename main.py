@@ -7,7 +7,7 @@ from app.db.mongodb import start_async_mongodb
 from app.utils import start_loguru
 
 
-async def start():
+async def start() -> None:
     start_loguru()
     await start_async_mongodb()
     await start_scheduler()
@@ -19,5 +19,8 @@ if __name__ == "__main__":
     loop.create_task(start())
     try:
         loop.run_forever()
-    except (KeyboardInterrupt, SystemExit):
-        logger.critical("Existed.")
+    except (KeyboardInterrupt, SystemExit) as e:
+        logger.critical(f"Closing loop. {e=}")
+    finally:
+        loop.close()
+        logger.critical("Closed loop.")

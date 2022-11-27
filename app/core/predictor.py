@@ -2,12 +2,12 @@ import asyncio
 from datetime import datetime
 from functools import lru_cache
 
-from loguru import logger
 import numpy as np
 from beanie.odm.operators.update.general import Set
+from loguru import logger
 from numba import jit
 
-from app.db.models import User, ContestRecordPredict, Contest
+from app.db.models import Contest, ContestRecordPredict, User
 from app.utils import exception_logger_reraise
 
 
@@ -20,7 +20,7 @@ def pre_sum_of_sigma(k: int) -> float:
     """
     if k < 0:
         raise ValueError(f"{k=}, pre_sum's index less than zero!")
-    return (5 / 7) ** k + pre_sum_of_sigma(k-1) if k >= 1 else 1
+    return (5 / 7) ** k + pre_sum_of_sigma(k - 1) if k >= 1 else 1
 
 
 @lru_cache
@@ -49,7 +49,7 @@ def expected_win_rate(vector: np.ndarray, scalar: float) -> np.ndarray:
 
 @exception_logger_reraise
 async def predict_contest(
-        contest_name: str,
+    contest_name: str,
 ) -> None:
     """
     Core predict function using official contest rating algorithm
@@ -100,7 +100,9 @@ async def predict_contest(
     logger.info("end loop for calculating expected_rating")
     expected_rating_array = np.array(expected_rating_list)
     coefficient_of_delta_array = np.array(coefficient_of_delta_list)
-    delta_rating_array = coefficient_of_delta_array * (expected_rating_array - rating_array)
+    delta_rating_array = coefficient_of_delta_array * (
+        expected_rating_array - rating_array
+    )
     new_rating_array = rating_array + delta_rating_array
 
     # update ContestRecordPredict collection
@@ -109,14 +111,11 @@ async def predict_contest(
         record.delta_rating = delta_rating_array[i]
         record.new_rating = new_rating_array[i]
         record.predict_time = predict_time
-    tasks = (
-        record.save()
-        for record in records
-    )
+    tasks = (record.save() for record in records)
     await asyncio.gather(*tasks)
-    logger.success(f"predict_contest finished updating ContestRecordPredict")
+    logger.success("predict_contest finished updating ContestRecordPredict")
     if update_user_using_prediction:
-        logger.info(f"immediately write predicted result back into User collection")
+        logger.info("immediately write predicted result back into User collection")
         tasks = (
             User.find_one(
                 User.username == record.username,
@@ -129,15 +128,16 @@ async def predict_contest(
                         User.update_time: datetime.utcnow(),
                     }
                 )
-            ) for record in records
+            )
+            for record in records
         )
         await asyncio.gather(*tasks)
-        logger.success(f"predict_contest finished updating User using predicted result")
-    await Contest.find_one(
-        Contest.titleSlug == contest_name,
-    ).update(
-        Set({
-            Contest.predict_time: datetime.utcnow(),
-        })
+        logger.success("predict_contest finished updating User using predicted result")
+    await Contest.find_one(Contest.titleSlug == contest_name).update(
+        Set(
+            {
+                Contest.predict_time: datetime.utcnow(),
+            }
+        )
     )
     logger.info("finished updating predict_time in Contest database")

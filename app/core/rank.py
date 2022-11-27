@@ -1,21 +1,27 @@
-from datetime import datetime, timedelta
 import asyncio
 import math
-from typing import List, Dict, Tuple
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple
 
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
 from app.crawler.contest import fill_questions_field, save_all_contests
-from app.db.models import Submission, ContestRecordArchive, ProjectionUniqueUser, Contest
+from app.db.models import (
+    Contest,
+    ContestRecordArchive,
+    ProjectionUniqueUser,
+    Submission,
+)
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import epoch_time_to_utc_datetime, get_contest_start_time, exception_logger_reraise
+from app.utils import (
+    epoch_time_to_utc_datetime,
+    exception_logger_reraise,
+    get_contest_start_time,
+)
 
 
-async def save_question_finish_count(
-        contest_name: str,
-        delta_minutes: int = 1
-) -> None:
+async def save_question_finish_count(contest_name: str, delta_minutes: int = 1) -> None:
     """
     For every delta_minutes, count accepted submissions for each question.
     :param contest_name:
@@ -34,9 +40,9 @@ async def save_question_finish_count(
     for question in contest.questions:
         tasks = (
             Submission.find(
-                    Submission.contest_name == contest_name,
-                    Submission.question_id == question.question_id,
-                    Submission.date <= time_point,
+                Submission.contest_name == contest_name,
+                Submission.question_id == question.question_id,
+                Submission.date <= time_point,
             ).count()
             for time_point in time_series
         )
@@ -56,7 +62,9 @@ async def aggregate_rank_at_time_point(
     :param time_point:
     :return:
     """
-    col = get_async_mongodb_collection(Submission.__name__)  # hard to use beanie here, so use raw MongoDB aggregation
+    col = get_async_mongodb_collection(
+        Submission.__name__
+    )  # hard to use beanie here, so use raw MongoDB aggregation
     rank_map = dict()
     last_credit_sum = math.inf
     last_penalty_date = epoch_time_to_utc_datetime(0)
@@ -114,7 +122,7 @@ async def save_real_time_rank(
     :param delta_minutes:
     :return:
     """
-    logger.info(f"started running real_time_rank update function")
+    logger.info("started running real_time_rank update function")
     users: List[ProjectionUniqueUser] = (
         await ContestRecordArchive.find(
             ContestRecordArchive.contest_name == contest_name,
@@ -158,10 +166,10 @@ async def save_real_time_rank(
 
 @exception_logger_reraise
 async def save_submission(
-        contest_name: str,
-        user_rank_list: List[Dict],
-        nested_submission_list: List[Dict],
-        questions_list: List[Dict],
+    contest_name: str,
+    user_rank_list: List[Dict],
+    nested_submission_list: List[Dict],
+    questions_list: List[Dict],
 ) -> None:
     """
     Save all of the submission-related data to MongoDB
@@ -175,18 +183,19 @@ async def save_submission(
     await save_all_contests()
     await fill_questions_field(contest_name, questions_list)
     question_credit_mapper = {
-        question["question_id"]: question["credit"]
-        for question in questions_list
+        question["question_id"]: question["credit"] for question in questions_list
     }
     submission_objs = list()
-    for user_rank_dict, nested_submission_dict in zip(user_rank_list, nested_submission_list):
+    for user_rank_dict, nested_submission_dict in zip(
+        user_rank_list, nested_submission_list
+    ):
         for k, value_dict in nested_submission_dict.items():
             nested_submission_dict[k].pop("id")
             nested_submission_dict[k] |= {
-                        "contest_name": contest_name,
-                        "username": user_rank_dict["username"],
-                        "credit": question_credit_mapper[value_dict["question_id"]],
-                    }
+                "contest_name": contest_name,
+                "username": user_rank_dict["username"],
+                "credit": question_credit_mapper[value_dict["question_id"]],
+            }
         submission_objs.extend(
             [
                 Submission.parse_obj(value_dict)
@@ -200,11 +209,13 @@ async def save_submission(
             Submission.data_region == submission.data_region,
             Submission.question_id == submission.question_id,
         ).upsert(
-            Set({
-                Submission.date: submission.date,
-                Submission.fail_count: submission.fail_count,
-                Submission.update_time: submission.update_time,
-            }),
+            Set(
+                {
+                    Submission.date: submission.date,
+                    Submission.fail_count: submission.fail_count,
+                    Submission.update_time: submission.update_time,
+                }
+            ),
             on_insert=submission,
         )
         for submission in submission_objs

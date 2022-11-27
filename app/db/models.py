@@ -1,5 +1,6 @@
-from typing import Optional, List
 from datetime import datetime
+from typing import List, Optional
+
 from beanie import Document, Indexed
 from pydantic import BaseModel, Field, validator
 
@@ -25,7 +26,7 @@ class Contest(Document):
     update_time: datetime = Field(default_factory=datetime.utcnow)
     predict_time: Optional[datetime] = None
 
-    @validator('startTime', 'endTime', pre=True)
+    @validator("startTime", "endTime", pre=True)
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
@@ -47,7 +48,7 @@ class ContestRecord(Document):
     finish_time: datetime
     data_region: Indexed(str)
 
-    @validator('finish_time', pre=True)
+    @validator("finish_time", pre=True)
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
@@ -99,7 +100,7 @@ class Submission(Document):
     contest_id: int
     update_time: datetime = Field(default_factory=datetime.utcnow)
 
-    @validator('date', pre=True)
+    @validator("date", pre=True)
     def epoch_to_utc(cls, v):
         if isinstance(v, int):
             return epoch_time_to_utc_datetime(v)
@@ -118,5 +119,3 @@ class KeyUniqueContestRecord(BaseModel):
 class ProjectionUniqueUser(BaseModel):
     username: str
     data_region: str
-
-

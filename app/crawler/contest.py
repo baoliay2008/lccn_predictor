@@ -1,6 +1,6 @@
 import asyncio
 import re
-from typing import List, Dict
+from typing import Dict, List
 
 import httpx
 from beanie.odm.operators.update.general import Set
@@ -25,25 +25,29 @@ async def multi_upsert_contests(
     for contest_dict in contests:
         try:
             contest_dict["past"] = past
-            contest_dict["endTime"] = contest_dict["startTime"] + contest_dict["duration"]
+            contest_dict["endTime"] = (
+                contest_dict["startTime"] + contest_dict["duration"]
+            )
             logger.debug(f"{contest_dict=}")
             contest = Contest.parse_obj(contest_dict)
             logger.debug(f"{contest=}")
         except Exception as e:
-            logger.exception(f"parse contest_dict error {e}. skip upsert {contest_dict=}")
+            logger.exception(
+                f"parse contest_dict error {e}. skip upsert {contest_dict=}"
+            )
             continue
         tasks.append(
-            Contest.find_one(
-                Contest.titleSlug == contest.titleSlug,
-            ).upsert(
-                Set({
+            Contest.find_one(Contest.titleSlug == contest.titleSlug,).upsert(
+                Set(
+                    {
                         Contest.update_time: contest.update_time,
                         Contest.title: contest.title,
                         Contest.startTime: contest.startTime,
                         Contest.duration: contest.duration,
                         Contest.past: past,
                         Contest.endTime: contest.endTime,
-                    }),
+                    }
+                ),
                 on_insert=contest,
             )
         )
@@ -52,7 +56,7 @@ async def multi_upsert_contests(
 
 
 async def multi_request_past_contests(
-        max_page_num: int,
+    max_page_num: int,
 ) -> List[Dict]:
     """
     Fetch past contests information
@@ -149,10 +153,7 @@ async def save_all_contests() -> None:
     logger.success("finished")
 
 
-async def fill_questions_field(
-        contest_name: str,
-        questions: List[Dict]
-) -> None:
+async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None:
     """
     For the past contests, fetch questions list and fill into MongoDB
     :param contest_name:
@@ -163,9 +164,7 @@ async def fill_questions_field(
         question_objs = list()
         for question in questions:
             question_objs.append(Question.parse_obj(question))
-        await Contest.find_one(
-            Contest.titleSlug == contest_name,
-        ).update(
+        await Contest.find_one(Contest.titleSlug == contest_name,).update(
             Set(
                 {
                     Contest.questions: question_objs,
