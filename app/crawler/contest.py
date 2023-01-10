@@ -1,5 +1,6 @@
 import asyncio
 import re
+from datetime import datetime
 from typing import Dict, List
 
 import httpx
@@ -161,16 +162,37 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
     :return:
     """
     try:
+        time_point = datetime.utcnow()
+        additional_fields = {
+            "contest_name": contest_name,
+        }
         question_objs = list()
         for question in questions:
-            question_objs.append(Question.parse_obj(question))
-        await Contest.find_one(Contest.titleSlug == contest_name,).update(
-            Set(
-                {
-                    Contest.questions: question_objs,
-                }
+            question.pop("id")
+            question_objs.append(Question.parse_obj(question | additional_fields))
+        tasks = (
+            Question.find_one(
+                Question.question_id == question_obj.question_id,
+                Question.contest_name == contest_name,
+            ).upsert(
+                Set(
+                    {
+                        Question.credit: question_obj.credit,
+                        Question.title: question_obj.title,
+                        Question.title_slug: question_obj.title_slug,
+                        Question.update_time: question_obj.update_time,
+                    }
+                ),
+                on_insert=question_obj,
             )
+            for question_obj in question_objs
         )
+        await asyncio.gather(*tasks)
+        # Old questions may change, could delete here.
+        await Question.find(
+            Question.contest_name == contest_name,
+            Question.update_time < time_point,
+        ).delete()
         logger.success("finished")
     except Exception as e:
         logger.error(

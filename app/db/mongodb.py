@@ -19,6 +19,7 @@ from app.db.models import (
     Contest,
     ContestRecordArchive,
     ContestRecordPredict,
+    Question,
     Submission,
     User,
 )
@@ -91,6 +92,7 @@ async def start_async_mongodb() -> None:
                 ContestRecordArchive,
                 User,
                 Submission,
+                Question,
             ],
         )
         logger.success("started mongodb connection")

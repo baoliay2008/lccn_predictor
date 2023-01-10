@@ -1,7 +1,7 @@
 import math
 import sys
 from asyncio import iscoroutinefunction
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from functools import partial, wraps
 from typing import Any, Callable
 
@@ -10,11 +10,13 @@ from loguru import logger
 from app.constants import BIWEEKLY_CONTEST_BASE, WEEKLY_CONTEST_BASE
 
 
-def epoch_time_to_utc_datetime(epoch_time: int) -> datetime:
-    return datetime.fromtimestamp(epoch_time).astimezone(timezone.utc)
-
-
 def get_passed_weeks(t: datetime, base_t: datetime) -> int:
+    """
+    Calculate how many weeks passed from base_t to t
+    :param t:
+    :param base_t:
+    :return:
+    """
     return math.floor((t - base_t).total_seconds() / (7 * 24 * 60 * 60))
 
 
@@ -36,7 +38,7 @@ def get_contest_start_time(contest_name: str) -> datetime:
         start_time = BIWEEKLY_CONTEST_BASE.dt + timedelta(
             weeks=(contest_num - BIWEEKLY_CONTEST_BASE.num) * 2
         )
-    logger.info(f"contest_name={contest_name} start_time={start_time}")
+    logger.info(f"{contest_name=} {start_time=}")
     return start_time
 
 

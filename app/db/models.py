@@ -1,61 +1,70 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from beanie import Document, Indexed
-from pydantic import BaseModel, Field, validator
+from beanie import Document
+from pydantic import BaseModel, Field
+from pymongo import IndexModel
 
-from app.utils import epoch_time_to_utc_datetime
+DATA_REGION = Literal["CN", "US"]
 
 
-class Question(BaseModel):
+class Question(Document):
     question_id: int
     credit: int
     title: str
     title_slug: str
-    real_time_count: Optional[list] = None
+    real_time_count: Optional[List[int]] = None
+    update_time: datetime = Field(default_factory=datetime.utcnow)
+    contest_name: str
+
+    class Settings:
+        indexes = [
+            "question_id",
+            "title_slug",
+            "contest_name",
+        ]
 
 
 class Contest(Document):
-    titleSlug: Indexed(str, unique=True)
-    title: Indexed(str)
-    startTime: Indexed(datetime)
+    titleSlug: str
+    title: str
+    startTime: datetime
     duration: int
-    endTime: Indexed(datetime)
+    endTime: datetime
     past: bool
-    questions: Optional[List[Question]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
     predict_time: Optional[datetime] = None
 
-    @validator("startTime", "endTime", pre=True)
-    def epoch_to_utc(cls, v):
-        if isinstance(v, int):
-            return epoch_time_to_utc_datetime(v)
-        elif isinstance(v, datetime):
-            return v
-        else:
-            raise TypeError(f"startTime/endTime={v} is not int or datetime")
+    class Settings:
+        indexes = [
+            IndexModel("titleSlug", unique=True),
+            "title",
+            "startTime",
+            "endTime",
+            "predict_time",
+        ]
 
 
 class ContestRecord(Document):
-    contest_name: Indexed(str)
+    contest_name: str
     contest_id: int
-    username: Indexed(str)
-    user_slug: Indexed(str)
+    username: str
+    user_slug: str
     country_code: Optional[str] = None
     country_name: Optional[str] = None
-    rank: Indexed(int)
+    rank: int
     score: int
     finish_time: datetime
-    data_region: Indexed(str)
+    data_region: DATA_REGION
 
-    @validator("finish_time", pre=True)
-    def epoch_to_utc(cls, v):
-        if isinstance(v, int):
-            return epoch_time_to_utc_datetime(v)
-        elif isinstance(v, datetime):
-            return v
-        else:
-            raise TypeError(f"finish_time={v} is not int or datetime")
+    class Settings:
+        indexes = [
+            "contest_name",
+            "username",
+            "user_slug",
+            "rank",
+            "data_region",
+        ]
 
 
 class ContestRecordPredict(ContestRecord):
@@ -77,22 +86,30 @@ class ContestRecordArchive(ContestRecord):
 
 
 class User(Document):
-    username: Indexed(str)
-    user_slug: Indexed(str)
-    data_region: Indexed(str)
+    username: str
+    user_slug: str
+    data_region: DATA_REGION
     attendedContestsCount: int
-    rating: Indexed(float)
+    rating: float
     update_time: datetime = Field(default_factory=datetime.utcnow)
     # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
+
+    class Settings:
+        indexes = [
+            "username",
+            "user_slug",
+            "data_region",
+            "rating",
+        ]
 
 
 class Submission(Document):
     # these four can be used as compound Index
-    contest_name: Indexed(str)
-    username: Indexed(str)
-    data_region: Indexed(str)
-    question_id: Indexed(int)
-    date: Indexed(datetime)
+    contest_name: str
+    username: str
+    data_region: DATA_REGION
+    question_id: int
+    date: datetime
     fail_count: int
     credit: int
     submission_id: int
@@ -100,22 +117,16 @@ class Submission(Document):
     contest_id: int
     update_time: datetime = Field(default_factory=datetime.utcnow)
 
-    @validator("date", pre=True)
-    def epoch_to_utc(cls, v):
-        if isinstance(v, int):
-            return epoch_time_to_utc_datetime(v)
-        elif isinstance(v, datetime):
-            return v
-        else:
-            raise TypeError(f"date={v} is not int or datetime")
+    class Settings:
+        indexes = [
+            "contest_name",
+            "username",
+            "data_region",
+            "question_id",
+            "date",
+        ]
 
 
-class KeyUniqueContestRecord(BaseModel):
-    contest_name: str
+class KeyOfUser(BaseModel):
     username: str
-    data_region: str
-
-
-class ProjectionUniqueUser(BaseModel):
-    username: str
-    data_region: str
+    data_region: DATA_REGION
