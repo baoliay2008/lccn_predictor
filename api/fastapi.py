@@ -1,21 +1,25 @@
+import asyncio
 import math
 from datetime import datetime
-from typing import Optional
+from typing import Final, List, Literal, Optional
 
-from fastapi import Body, FastAPI, Form, Request
+from fastapi import Body, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
+from pydantic import BaseModel
 
-from app.db.models import (
-    Contest,
-    ContestRecordArchive,
-    ContestRecordPredict,
-    KeyUniqueContestRecord,
-)
+from app.db.models import Contest, ContestRecordArchive, ContestRecordPredict, Question
 from app.db.mongodb import start_async_mongodb
 from app.utils import start_loguru
+
+
+class KeyUniqueContestRecord(BaseModel):
+    contest_name: str
+    username: str
+    data_region: str
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -41,7 +45,7 @@ async def index_page_get(
         .sort(-Contest.startTime)
         .to_list()
     )
-    logger.debug(f"{predict_contests=}")
+    logger.trace(f"{predict_contests=}")
     return templates.TemplateResponse(
         "index.html",
         {
@@ -137,7 +141,7 @@ async def contest_user_rank_list(
             record.real_time_rank if record and record.real_time_rank else []
         )
     ]
-    logger.debug(f"{unique_contest_record=} {data=}")
+    logger.trace(f"{unique_contest_record=} {data=}")
     return {
         "real_time_rank": data,
         "start_time": start_time,
@@ -157,12 +161,12 @@ async def contest_questions_finished_list(
     if not contest:
         logger.error(f"contest not found for {contest_name=}")
         return {}
-    questions = contest.questions
+    questions = await Question.find(Question.contest_name == contest_name).to_list()
     if not questions:
         logger.error(f"{questions=}, no data now")
         return {"real_time_count": data}
     questions.sort(key=lambda q: q.credit)
-    logger.debug(f"{questions=}")
+    logger.trace(f"{questions=}")
     for i, question in enumerate(questions):
         data.extend(
             [
@@ -170,5 +174,61 @@ async def contest_questions_finished_list(
                 for minute, count in enumerate(question.real_time_count)
             ]
         )
-    logger.debug(f"{contest_name=} {data=}")
+    logger.trace(f"{contest_name=} {data=}")
     return {"real_time_count": data}
+
+
+DATA_REGION = Literal["CN", "US"]
+
+
+class UniqueUser(BaseModel):
+    username: str
+    data_region: DATA_REGION
+
+
+class QueryPredictedRecords(BaseModel):
+    contest_name: str
+    users: List[UniqueUser]
+
+
+class ProjectionPredictedResult(BaseModel):
+    old_rating: Optional[float] = None
+    new_rating: Optional[float] = None
+    delta_rating: Optional[float] = None
+
+
+@app.post("/predict_records")
+async def contest_predict_records(
+    request: Request,
+    query: QueryPredictedRecords,
+):
+    """
+    Query multiple predicted records in a contest.
+    :param request:
+    :param query:
+    :return:
+    """
+    logger.info(f"{request.client=}")
+    MAX_USERS: Final[int] = 26
+    contest = await Contest.find_one(Contest.titleSlug == query.contest_name)
+    if not contest:
+        logger.error(f"contest not found for {query.contest_name=}")
+        raise HTTPException(
+            status_code=400, detail=f"contest not found for {query.contest_name=}"
+        )
+    if (users_count := len(query.users)) > MAX_USERS:
+        logger.error(f"{users_count=} per request, denied.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"request denied because {users_count=}, which is bigger than maximum value={MAX_USERS}",
+        )
+    tasks = (
+        ContestRecordPredict.find_one(
+            ContestRecordPredict.contest_name == query.contest_name,
+            ContestRecordPredict.data_region == user.data_region,
+            ContestRecordPredict.username == user.username,
+            projection_model=ProjectionPredictedResult,
+        )
+        for user in query.users
+    )
+    return await asyncio.gather(*tasks)
