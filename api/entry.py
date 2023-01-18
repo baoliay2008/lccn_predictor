@@ -10,15 +10,18 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://lccn.lbao.site",
+        # "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(contests.router)
-app.include_router(contest_records.router)
-app.include_router(questions.router)
+app.include_router(contests.router, prefix="/api/v1")
+app.include_router(contest_records.router, prefix="/api/v1")
+app.include_router(questions.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
