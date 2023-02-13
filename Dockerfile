@@ -20,5 +20,5 @@ WORKDIR /lccn_predictor
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run project
-# make main.py a background task, althought it's not a good idea to run two process in a single container
-CMD python3 main.py & uvicorn api.fastapi:app --host 0.0.0.0 --port 55555
+# make main.py a background task, although it's not a good idea to run two processes in a single container
+CMD python3 main.py & uvicorn api.entry:app --host 0.0.0.0 --port 55555
