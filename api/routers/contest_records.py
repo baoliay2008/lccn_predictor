@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Request
 from loguru import logger
@@ -19,7 +19,16 @@ async def contest_records_count(
     request: Request,
     contest_name: str,
     archived: Optional[bool] = False,
-):
+) -> int:
+    """
+    Count records of a given contest.
+    By default, count predicted contests only.
+    Count archived contests when setting `archived = True` explicitly.
+    :param request:
+    :param contest_name:
+    :param archived:
+    :return:
+    """
     logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
@@ -42,7 +51,18 @@ async def contest_records(
     archived: Optional[bool] = False,
     skip: Optional[NonNegativeInt] = 0,
     limit: Optional[conint(ge=1, le=100)] = 25,
-):
+) -> List[ContestRecordPredict | ContestRecordArchive]:
+    """
+    Query all records of a given contest.
+    By default, query predicted contests only.
+    Query archived contests when setting `archived = True` explicitly.
+    :param request:
+    :param contest_name:
+    :param archived:
+    :param skip:
+    :param limit:
+    :return:
+    """
     logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
@@ -76,7 +96,17 @@ async def contest_records_user(
     contest_name: str,
     username: str,
     archived: Optional[bool] = False,
-):
+) -> List[ContestRecordPredict | ContestRecordArchive]:
+    """
+    Query records of a given contest by username.
+    By default, query predicted contests only.
+    Query archived contests when setting `archived = True` explicitly.
+    :param request:
+    :param contest_name:
+    :param username:
+    :param archived:
+    :return:
+    """
     logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
@@ -109,7 +139,7 @@ class ResultOfContestRecordPredict(BaseModel):
 async def predicted_rating(
     request: Request,
     query: RequestOfContestRecords,
-):
+) -> List[Optional[ResultOfContestRecordPredict]]:
     """
     Query multiple predicted records in a contest.
     :param request:
@@ -143,7 +173,13 @@ class ResultOfRealTimeRank(BaseModel):
 async def real_time_rank(
     request: Request,
     query: RequestOfRealTimeRank,
-):
+) -> ResultOfRealTimeRank:
+    """
+    Query user's realtime rank list of a given contest.
+    :param request:
+    :param query:
+    :return:
+    """
     logger.info(f"{request.client=}")
     await check_contest_name(query.contest_name)
     return await ContestRecordArchive.find_one(

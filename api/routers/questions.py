@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from loguru import logger
@@ -23,7 +23,14 @@ class RequestOfQuestions(BaseModel):
 async def questions(
     request: Request,
     query: RequestOfQuestions,
-):
+) -> List[Question]:
+    """
+    Query questions for a given contest.
+    Questions number must between 1 and 4 inclusively.
+    :param request:
+    :param query:
+    :return:
+    """
     logger.info(f"{request.client=}")
     if not (bool(query.contest_name) ^ bool(query.question_id_list)):
         msg = "contest_name OR question_id_list must be given!"

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Request
 from loguru import logger
@@ -14,7 +14,10 @@ router = APIRouter(
 
 
 @router.get("/count")
-async def contests_count(request: Request, archived: Optional[bool] = False):
+async def contests_count(
+    request: Request,
+    archived: Optional[bool] = False,
+) -> int:
     """
     Count total contests in database.
     By default, count predicted contests only.
@@ -39,11 +42,11 @@ async def contests(
     archived: Optional[bool] = False,
     skip: Optional[NonNegativeInt] = 0,
     limit: Optional[conint(ge=1, le=25)] = 10,
-):
+) -> List[Contest]:
     """
-    Query total contests in database.
+    Query contests in database.
     By default, Query predicted contests only.
-    Query all archived contests when setting `archived = True` explicitly.
+    Query archived contests when setting `archived = True` explicitly.
     :param request:
     :param archived:
     :param skip:
