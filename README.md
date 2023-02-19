@@ -1,12 +1,14 @@
 
 # Introduction
 
-This is a Leetcode weekly and biweekly contest rating predictor. The app is available online at [🔗 lccn.lbao.site](https://lccn.lbao.site/)
+This is a `Leetcode` weekly and biweekly contest rating predictor. The APP is available online at [🔗 lccn.lbao.site](https://lccn.lbao.site/)
+
+Hopefully, you can get the predicted result within 20-30 minutes after the contest has finished.
 
 ## Features
 * ⚡️ Fast
-  > 1. The core prediction algorithm is accelerated by a JIT compiler([Numba](https://numba.pydata.org/)) which costs around 20 seconds on a two-cores *Intel(R) Xeon(R) Platinum 8255C CPU @ 2.50GHz* CPU.
-  > 2. Users' latest rating was **cached** before predicting which can save a lot of time fetching data.
+  > 1. The core prediction algorithm is accelerated by a JIT compiler([Numba](https://numba.pydata.org/)) which costs around 20 seconds on a two-cores *Intel(R) Xeon(R) Platinum 8255C CPU* (@ 2.50GHz).
+  > 2. User's latest rating was **cached** serval times before predicting which can save a lot of time fetching data.
 * 🎯 Accurate
   > 1. If there were no massive rejudges(say, everyone's global ranking stays unchanged), the rating difference should be negligible.
   > 2. Please note that a normal case is that there would be some misconduct detection, so your global ranking will be slightly higher even if your submissions are not rejudged, which results in a slightly higher rating :)
@@ -45,7 +47,7 @@ This is a Leetcode weekly and biweekly contest rating predictor. The app is avai
 
 # Development
 
-## Deployment
+## Backend Deployment
 
 ### virtualenv
 
@@ -77,13 +79,13 @@ cp config.yaml.template config.yaml
 vi config.yaml
 
 # build docker image
-docker image build -t lccn_predictor:0.2.1 .
+docker image build -t lccn_predictor:0.1.1 .
 
 # create docker volume
 docker volume create lccn_predictor
 
 # run container
-docker run -d -v lccn_predictor:/lccn_predictor -p 55555:55555 --name lp lccn_predictor:0.0.1
+docker run -d -v lccn_predictor:/lccn_predictor -p 55555:55555 --name lp lccn_predictor:0.1.1
 
 docker exec -it lp bash
 
@@ -93,13 +95,35 @@ docker container start lp
 
 ```
 
+## Frontend Deployment
+
+```shell
+cd client
+
+# install dependencies
+npm install
+
+# change `baseUrl` to your local backend process
+vi src/data/constants.js
+# if you followed instruction above
+# it should be "http://localhost:55555/api/v1"
+
+# local test
+npm start
+
+# publish
+npm run build
+
+```
+
+
 # License
 
 [MIT License](LICENSE)
 
 # Changelog
 
-* v0.0.1(2022/11/25)
+* v0.0.1(2022/11/14)
   > make this repo public, first release.
-* v0.2.1(2023/01/21)
+* v0.1.1(2023/02/14)
   > change frontend from server-side rendering([Jinja](https://jinja.palletsprojects.com/) + [Materialize](https://materializecss.com/)) to client-side rendering([React](https://reactjs.org/)).
