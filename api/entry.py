@@ -1,19 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_yaml_config
 from app.db.mongodb import start_async_mongodb
 from app.utils import start_loguru
 
 from .routers import contest_records, contests, questions
 
 app = FastAPI()
+yaml_config = get_yaml_config().get("fastapi")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://lccn.lbao.site",
-        # "http://localhost:3000",
-    ],
+    allow_origins=yaml_config.get("CORS_allow_origins"),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

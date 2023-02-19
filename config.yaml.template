@@ -13,3 +13,7 @@ mongodb:
   username: 'username'
   password: 'password'
   db: lccn
+fastapi:
+  CORS_allow_origins:
+    - "http://localhost:3000"
+    - "https://lccn.lbao.site"
