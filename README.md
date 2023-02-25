@@ -127,3 +127,9 @@ npm run build
   > make this repo public, first release.
 * v0.1.1(2023/02/14)
   > change frontend from server-side rendering([Jinja](https://jinja.palletsprojects.com/) + [Materialize](https://materializecss.com/)) to client-side rendering([React](https://reactjs.org/)).
+
+---
+
+# Supported by
+
+[![JetBrains Logo (Main) logo](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)](https://jb.gg/OpenSourceSupport)
