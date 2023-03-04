@@ -19,11 +19,10 @@ const QuestionFinishedChart = ({ questionsRaw }) => {
   const questions = [...questionsRaw].sort((a, b) =>
     a.credit === b.credit ? a.question_id - b.question_id : a.credit - b.credit
   );
-  if (questions === null) return null;
 
   const real_time_count = [["Minute", "Question", "Count"]];
   for (let i = 1; i <= questions.length; i++) {
-    for (let j = 1; j <= questions[0].real_time_count.length; j++) {
+    for (let j = 1; j <= questions[0].real_time_count?.length; j++) {
       real_time_count.push([
         j,
         `Q${i}`,
