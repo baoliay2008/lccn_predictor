@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 from pydantic import BaseModel
+from beanie.operators import Text 
 
 from app.db.models import Contest, ContestRecordArchive, ContestRecordPredict, Question
 from app.db.mongodb import start_async_mongodb
@@ -99,9 +100,10 @@ async def contest_user_post(
     username: Optional[str] = Form(None),
 ):
     logger.info(f"{request.client=}, {contest_name=}, {username=}")
-    record = await ContestRecordPredict.find_one(
+    record = await ContestRecordPredict.find(
         ContestRecordPredict.contest_name == contest_name,
-        ContestRecordPredict.username == username,
+        Text(ContestRecordPredict.username,username),
+        # ContestRecordPredict.username == username,
         ContestRecordPredict.score != 0,
     )
     return templates.TemplateResponse(
