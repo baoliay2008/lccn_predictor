@@ -99,7 +99,7 @@ async def multi_request_user_cn(
             }
             for contest_record in cn_multi_request_list
         },
-        concurrent_num=5,
+        concurrent_num=1,
     )
     await multi_upsert_user(cn_response_list, cn_multi_request_list)
     cn_multi_request_list.clear()
@@ -156,8 +156,8 @@ async def save_users_of_contest(
     if predict:
         to_be_queried = ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
-            ContestRecordPredict.score
-            != 0,  # for prediction, just focus on records which have a score.
+            # for prediction, just focus on records which have a score.
+            ContestRecordPredict.score != 0,
             batch_size=10,
         )
     else:

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -15,6 +16,7 @@ from app.constants import (
 from app.core.predictor import predict_contest
 from app.crawler.contest import save_all_contests
 from app.crawler.contest_records import (
+    check_cn_data_is_ready,
     save_archive_contest_records,
     save_predict_contest_records,
 )
@@ -51,15 +53,41 @@ async def save_last_two_contest_records() -> None:
 
 
 @exception_logger_reraise
-async def composed_predict_jobs(contest_name: str) -> None:
+async def composed_predict_jobs(
+    contest_name: str,
+    max_try_times: int = 120,
+) -> None:
     """
     All three steps which should be run when the contest is just over
     :param contest_name:
+    :param max_try_times:
     :return:
     """
-    await save_predict_contest_records(contest_name=contest_name)
+    tried_times = 1
+    while (
+        not (cn_data_is_ready := check_cn_data_is_ready(contest_name))
+        and tried_times < max_try_times
+    ):
+        await asyncio.sleep(60)
+        tried_times += 1
+    if not cn_data_is_ready:
+        logger.critical(f"give up after failed {tried_times=} times")
+        return
+    await save_predict_contest_records(contest_name=contest_name, data_region="CN")
     await predict_contest(contest_name=contest_name)
-    await save_archive_contest_records(contest_name=contest_name, save_users=False)
+    await save_archive_contest_records(
+        contest_name=contest_name, data_region="CN", save_users=False
+    )
+
+
+async def pre_save_predict_users(contest_name: str) -> None:
+    """
+    Cache CN and US users during contest
+    :param contest_name:
+    :return:
+    """
+    await save_predict_contest_records(contest_name, "CN")
+    await save_predict_contest_records(contest_name, "US")
 
 
 async def add_prediction_schedulers(contest_name: str) -> None:
@@ -74,17 +102,18 @@ async def add_prediction_schedulers(contest_name: str) -> None:
     utc = datetime.utcnow()
     global global_scheduler
     for pre_save_time in [utc + timedelta(minutes=25), utc + timedelta(minutes=70)]:
+        # preparation for prediction running, get users in advance.
         global_scheduler.add_job(
-            save_predict_contest_records,  # preparation for prediction running, get users in advance.
+            pre_save_predict_users,
             kwargs={"contest_name": contest_name},
             trigger="date",
             run_date=pre_save_time,
         )
-    predict_run_time = utc + timedelta(
-        minutes=105
-    )  # postpone 15 minutes to wait for leetcode updating final result.
+    # postpone 5 minutes to wait for LeetCode updating final result.
+    predict_run_time = utc + timedelta(minutes=95)
+    # real prediction running function.
     global_scheduler.add_job(
-        composed_predict_jobs,  # real prediction running function.
+        composed_predict_jobs,
         kwargs={"contest_name": contest_name},
         trigger="date",
         run_date=predict_run_time,
