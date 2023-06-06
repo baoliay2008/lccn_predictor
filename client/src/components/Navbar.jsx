@@ -8,9 +8,12 @@ import {
   // faCircleQuestion,
 } from "@fortawesome/free-solid-svg-icons";
 import { themes } from "../data/constants";
+import { DataThemeContext } from "../App";
 import { Link } from "react-router-dom";
+import { useContext } from "react";
 
-const Theme = ({ dataTheme, setDataTheme }) => {
+const ThemeButton = () => {
+  const { dataTheme, setDataTheme } = useContext(DataThemeContext);
   return (
     <div className="dropdown dropdown-hover dropdown-bottom dropdown-end">
       <label tabIndex={0} className="btn m-1">
@@ -38,7 +41,7 @@ const Theme = ({ dataTheme, setDataTheme }) => {
   );
 };
 
-const Navbar = ({ dataTheme, setDataTheme }) => {
+const Navbar = () => {
   return (
     <div className="navbar bg-base-100">
       <div className="navbar-start">
@@ -70,7 +73,7 @@ const Navbar = ({ dataTheme, setDataTheme }) => {
       </ul> */}
 
       <div className="navbar-end">
-        <Theme dataTheme={dataTheme} setDataTheme={setDataTheme} />
+        <ThemeButton />
       </div>
     </div>
   );
