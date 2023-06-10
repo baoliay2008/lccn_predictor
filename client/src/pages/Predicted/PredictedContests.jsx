@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import useFetch from "../../hooks/useFetch";
+import useSWR from "swr";
 import Pagination from "../../components/Pagination";
 import { baseUrl } from "../../data/constants";
 
@@ -84,15 +84,19 @@ const PredictedContest = () => {
 
   const {
     data: contests,
-    loading,
+    isLoading,
     error,
-  } = useFetch(`${baseUrl}/contests/?skip=${skipNum}&limit=${pageSize}`);
+  } = useSWR(`${baseUrl}/contests/?skip=${skipNum}&limit=${pageSize}`, (url) =>
+    fetch(url).then((r) => r.json())
+  );
 
   // TODO: totalCount could +1 but won't refetch currently, a potential bug here.
-  const { data: totalCount } = useFetch(`${baseUrl}/contests/count`);
+  const { data: totalCount } = useSWR(`${baseUrl}/contests/count`, (url) =>
+    fetch(url).then((r) => r.json())
+  );
   // console.log(`totalCount=${totalCount} pageNum=${pageNum}`);
 
-  if (!contests || loading)
+  if (!contests || isLoading)
     return (
       <div className="grid h-screen place-items-center ">
         <div>

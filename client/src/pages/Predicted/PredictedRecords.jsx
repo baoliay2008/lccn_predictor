@@ -10,7 +10,7 @@ import {
   faLeftLong,
 } from "@fortawesome/free-solid-svg-icons";
 
-import useFetch from "../../hooks/useFetch";
+import useSWR from "swr";
 import Pagination from "../../components/Pagination";
 import { baseUrl } from "../../data/constants";
 
@@ -129,14 +129,20 @@ const RealTimeRankChart = ({ user }) => {
 
   const { titleSlug } = useParams();
 
-  const { data } = useFetch(
-    `${baseUrl}/contest-records/real-time-rank`,
-    "POST",
-    { "Content-Type": "application/json" },
-    JSON.stringify({
-      contest_name: titleSlug,
-      user: user,
-    })
+  const { data } = useSWR(
+    [
+      `${baseUrl}/contest-records/real-time-rank`,
+      JSON.stringify({
+        contest_name: titleSlug,
+        user: user,
+      }),
+    ],
+    ([url, body]) =>
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      }).then((r) => r.json())
   );
   const rankList = data?.real_time_rank;
   if (!rankList) return null;
@@ -415,27 +421,38 @@ const PredictedRecords = () => {
     setUser(null);
   }, [pageNum, isSearching]);
 
-  const { data: totalCount } = useFetch(
-    `${baseUrl}/contest-records/count?contest_name=${titleSlug}&archived=false`
+  const { data: totalCount } = useSWR(
+    `${baseUrl}/contest-records/count?contest_name=${titleSlug}&archived=false`,
+    (url) => fetch(url).then((r) => r.json())
   );
 
-  const { data: questionsRaw } = useFetch(
-    `${baseUrl}/questions/`,
-    "POST",
-    { "Content-Type": "application/json" },
-    JSON.stringify({
-      contest_name: titleSlug,
-    })
+  const { data: questionsRaw } = useSWR(
+    [
+      `${baseUrl}/questions/`,
+      JSON.stringify({
+        contest_name: titleSlug,
+      }),
+    ],
+    ([url, body]) =>
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      }).then((r) => r.json())
   );
+  // console.log(`questionsRaw=${questionsRaw}`);
 
   // console.log(`predictedRecordsURL=${predictedRecordsURL}`);
   const {
     data: predictedRecords,
-    loading,
+    isLoading,
     error,
-  } = useFetch(predictedRecordsURL);
+  } = useSWR(predictedRecordsURL, (url) => fetch(url).then((r) => r.json()));
 
-  if (predictedRecords === null || loading)
+  // if (predictedRecordsURL === null) return;
+  // console.log(`predictedRecords=${predictedRecords}`);
+
+  if (!predictedRecords || isLoading)
     return (
       <div className="grid h-screen place-items-center ">
         <div>
