@@ -142,7 +142,8 @@ const RealTimeRankChart = ({ user }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: body,
-      }).then((r) => r.json())
+      }).then((r) => r.json()),
+    { revalidateOnFocus: false }
   );
   const rankList = data?.real_time_rank;
   if (!rankList) return null;
@@ -423,7 +424,8 @@ const PredictedRecords = () => {
 
   const { data: totalCount } = useSWR(
     `${baseUrl}/contest-records/count?contest_name=${titleSlug}&archived=false`,
-    (url) => fetch(url).then((r) => r.json())
+    (url) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
   );
 
   const { data: questionsRaw } = useSWR(
@@ -438,7 +440,8 @@ const PredictedRecords = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: body,
-      }).then((r) => r.json())
+      }).then((r) => r.json()),
+    { revalidateOnFocus: false }
   );
   // console.log(`questionsRaw=${questionsRaw}`);
 
@@ -447,7 +450,9 @@ const PredictedRecords = () => {
     data: predictedRecords,
     isLoading,
     error,
-  } = useSWR(predictedRecordsURL, (url) => fetch(url).then((r) => r.json()));
+  } = useSWR(predictedRecordsURL, (url) => fetch(url).then((r) => r.json()), {
+    revalidateOnFocus: false,
+  });
 
   // if (predictedRecordsURL === null) return;
   // console.log(`predictedRecords=${predictedRecords}`);

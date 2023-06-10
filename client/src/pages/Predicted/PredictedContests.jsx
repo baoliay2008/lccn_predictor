@@ -86,13 +86,17 @@ const PredictedContest = () => {
     data: contests,
     isLoading,
     error,
-  } = useSWR(`${baseUrl}/contests/?skip=${skipNum}&limit=${pageSize}`, (url) =>
-    fetch(url).then((r) => r.json())
+  } = useSWR(
+    `${baseUrl}/contests/?skip=${skipNum}&limit=${pageSize}`,
+    (url) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
   );
 
   // TODO: totalCount could +1 but won't refetch currently, a potential bug here.
-  const { data: totalCount } = useSWR(`${baseUrl}/contests/count`, (url) =>
-    fetch(url).then((r) => r.json())
+  const { data: totalCount } = useSWR(
+    `${baseUrl}/contests/count`,
+    (url) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
   );
   // console.log(`totalCount=${totalCount} pageNum=${pageNum}`);
 
