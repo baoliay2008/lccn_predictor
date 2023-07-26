@@ -13,6 +13,7 @@ import {
 import useSWR from "swr";
 import Pagination from "../../components/Pagination";
 import { baseUrl } from "../../data/constants";
+import { trendColorsHSL } from "../../utils";
 
 const QuestionFinishedChart = ({ questionsRaw }) => {
   // console.log("QuestionFinishedChart questionsRaw=", questionsRaw);
@@ -365,8 +366,10 @@ const PredictedRecordsTable = ({ predictedRecords, setUser }) => {
                 style={{
                   backgroundColor:
                     record.delta_rating > 0
-                      ? `hsla(0, 100%, 66%, ${0.1 + record.delta_rating / 100})`
-                      : `hsla(120, 100%, 66%, ${
+                      ? `hsla(${trendColorsHSL.up}, ${
+                          0.1 + record.delta_rating / 100
+                        })`
+                      : `hsla(${trendColorsHSL.down}, ${
                           0.2 - record.delta_rating / 100
                         })`,
                 }}
