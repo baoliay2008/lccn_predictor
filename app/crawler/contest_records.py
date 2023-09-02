@@ -29,7 +29,16 @@ def check_cn_data_is_ready(
         ).json()
         fallback_local = cn_data.get("fallback_local")
         if fallback_local is None:
-            return True
+            us_data = httpx.get(
+                f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+                timeout=60,
+            ).json()
+            # check user_num in two different regions, if they are equal then return True
+            is_satisfied = (cn_user_num := cn_data.get("user_num")) == (
+                us_user_num := us_data.get("user_num")
+            )
+            logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
+            return is_satisfied
         else:
             logger.info(f"check {fallback_local=} unsatisfied")
             return False
