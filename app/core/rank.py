@@ -149,8 +149,10 @@ async def save_real_time_rank(
             if len(real_time_rank_map[k]) != i:
                 real_time_rank_map[k].append(last_rank)
         i += 1
-    tasks = (
-        ContestRecordArchive.find_one(
+    # Not use asyncio.gather here because of limited memory on VM which caused several times of OOM
+    for (username, data_region), rank_list in real_time_rank_map.items():
+        logger.info(f"writing {username=} {data_region=}")
+        await ContestRecordArchive.find_one(
             ContestRecordArchive.contest_name == contest_name,
             ContestRecordArchive.username == username,
             ContestRecordArchive.data_region == data_region,
@@ -161,9 +163,6 @@ async def save_real_time_rank(
                 }
             )
         )
-        for (username, data_region), rank_list in real_time_rank_map.items()
-    )
-    await asyncio.gather(*tasks)
     logger.success(f"finished updating real_time_rank for {contest_name=}")
 
 
