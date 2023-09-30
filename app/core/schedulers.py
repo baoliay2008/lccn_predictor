@@ -28,34 +28,35 @@ global_scheduler: Optional[AsyncIOScheduler] = None
 @exception_logger_reraise
 async def save_last_two_contest_records() -> None:
     """
-    Update last weekly contest, and biweekly contest if exists.
+    Update last weekly contest, and last biweekly contest.
     Upsert contest records in ContestRecordArchive, its users will also be updated in the save_archive_contest function.
     :return:
     """
     utc = datetime.utcnow()
+
+    biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.dt)
+    last_biweekly_contest_name = (
+        f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
+    )
+    logger.info(f"{last_biweekly_contest_name=} update archive contests")
+    await save_archive_contest_records(
+        contest_name=last_biweekly_contest_name, data_region="CN"
+    )
+
     weekly_passed_weeks = get_passed_weeks(utc, WEEKLY_CONTEST_BASE.dt)
     last_weekly_contest_name = (
         f"weekly-contest-{weekly_passed_weeks + WEEKLY_CONTEST_BASE.num}"
     )
     logger.info(f"{last_weekly_contest_name=} update archive contests")
-    await save_archive_contest_records(contest_name=last_weekly_contest_name)
-    biweekly_passed_weeks = get_passed_weeks(utc, BIWEEKLY_CONTEST_BASE.dt)
-    if biweekly_passed_weeks % 2 != 0:
-        logger.info(
-            f"will not update last biweekly users, {biweekly_passed_weeks=} is odd for {utc=}"
-        )
-        return
-    last_biweekly_contest_name = (
-        f"biweekly-contest-{biweekly_passed_weeks // 2 + BIWEEKLY_CONTEST_BASE.num}"
+    await save_archive_contest_records(
+        contest_name=last_weekly_contest_name, data_region="CN"
     )
-    logger.info(f"{last_biweekly_contest_name=} update archive contests")
-    await save_archive_contest_records(contest_name=last_biweekly_contest_name)
 
 
 @exception_logger_reraise
 async def composed_predict_jobs(
     contest_name: str,
-    max_try_times: int = 120,
+    max_try_times: int = 25,
 ) -> None:
     """
     All three steps which should be run when the contest is just over
@@ -71,8 +72,9 @@ async def composed_predict_jobs(
         await asyncio.sleep(60)
         tried_times += 1
     if not cn_data_is_ready:
-        logger.critical(f"give up after failed {tried_times=} times")
-        return
+        logger.error(
+            f"give up after failed {tried_times=} times. CONTINUE WITH INCOMPLETE DATA"
+        )
     await save_predict_contest_records(contest_name=contest_name, data_region="CN")
     await predict_contest(contest_name=contest_name)
     await save_archive_contest_records(
