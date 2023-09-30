@@ -8,7 +8,11 @@ from loguru import logger
 from app.crawler.contest import fill_questions_field, save_all_contests
 from app.db.models import ContestRecordArchive, KeyOfUser, Question, Submission
 from app.db.mongodb import get_async_mongodb_collection
-from app.utils import exception_logger_reraise, get_contest_start_time
+from app.utils import (
+    exception_logger_reraise,
+    gather_with_limited_concurrency,
+    get_contest_start_time,
+)
 
 
 async def finish_count_at_time_point(
@@ -149,10 +153,8 @@ async def save_real_time_rank(
             if len(real_time_rank_map[k]) != i:
                 real_time_rank_map[k].append(last_rank)
         i += 1
-    # Not use asyncio.gather here because of limited memory on VM which caused several times of OOM
-    for (username, data_region), rank_list in real_time_rank_map.items():
-        logger.info(f"writing {username=} {data_region=}")
-        await ContestRecordArchive.find_one(
+    tasks = [
+        ContestRecordArchive.find_one(
             ContestRecordArchive.contest_name == contest_name,
             ContestRecordArchive.username == username,
             ContestRecordArchive.data_region == data_region,
@@ -163,6 +165,10 @@ async def save_real_time_rank(
                 }
             )
         )
+        for (username, data_region), rank_list in real_time_rank_map.items()
+    ]
+    logger.info("updating real_time_rank field in ContestRecordArchive collection")
+    await gather_with_limited_concurrency(tasks, max_con_num=20)
     logger.success(f"finished updating real_time_rank for {contest_name=}")
 
 
@@ -174,7 +180,7 @@ async def save_submission(
     questions_list: List[Dict],
 ) -> None:
     """
-    Save all of the submission-related data to MongoDB
+    Save all of submission-related data to MongoDB
     :param contest_name:
     :param user_rank_list:
     :param nested_submission_list:
@@ -204,7 +210,7 @@ async def save_submission(
                 for value_dict in nested_submission_dict.values()
             ]
         )
-    tasks = (
+    tasks = [
         Submission.find_one(
             Submission.contest_name == submission.contest_name,
             Submission.username == submission.username,
@@ -222,8 +228,9 @@ async def save_submission(
             on_insert=submission,
         )
         for submission in submission_objs
-    )
-    await asyncio.gather(*tasks)
+    ]
+    logger.info("updating Submission collection")
+    await gather_with_limited_concurrency(tasks, max_con_num=50)
     # Old submissions may be rejudged, must be deleted here, or will cause error when plotting.
     await Submission.find(
         Submission.contest_name == contest_name,
