@@ -34,7 +34,7 @@ def check_cn_data_is_ready(
                 timeout=60,
             ).json()
             # check user_num in two different regions, if they are equal then return True
-            is_satisfied = (cn_user_num := cn_data.get("user_num")) == (
+            is_satisfied = (cn_user_num := cn_data.get("user_num")) >= (
                 us_user_num := us_data.get("user_num")
             )
             logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
