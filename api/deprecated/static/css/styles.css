@@ -1,20 +1,20 @@
 /* use my favorite color (#0288d1 light-blue darken-2) for all buttons, icons and highlights */
 
 main {
-    margin-top: 3em;
-    margin-bottom: 20em;
+  margin-top: 3em;
+  margin-bottom: 20em;
 }
 
 /* label focus color */
 .input-field input:focus + label {
-    color: #0288d1 !important;
+  color: #0288d1 !important;
 }
 /* label underline focus color */
 .row .input-field input:focus {
-    border-bottom: 1px solid #0288d1 !important;
-    box-shadow: 0 1px 0 0 #0288d1 !important
+  border-bottom: 1px solid #0288d1 !important;
+  box-shadow: 0 1px 0 0 #0288d1 !important;
 }
 /* icon prefix focus color */
 .row .input-field .prefix.active {
-    color: #0288d1;
+  color: #0288d1;
 }

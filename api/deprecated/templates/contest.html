@@ -19,7 +19,7 @@
             <div class="row">
                 <div class="col s1">
                     {% if current_page %}
-                    <a class="waves-effect waves-light btn-small black" href="/" style="display: flex; justify-content: center;">
+                    <a class="waves-effect waves-light btn-small black" href="/api/deprecated/static" style="display: flex; justify-content: center;">
                     {% else %}
                     <a class="waves-effect waves-light btn-small black" href="/{{contest_name}}/1" style="display: flex; justify-content: center;">
                     {% endif %}
@@ -168,6 +168,3 @@
     <script src="{{url_for('static', path='/js/questions-finished-plot.js')}}" type="module" ></script>
 
 {% endblock %}
-
-
-

@@ -22,8 +22,8 @@ class KeyUniqueContestRecord(BaseModel):
 
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="api/deprecated/static"), name="static")
+templates = Jinja2Templates(directory="api/deprecated/templates")
 
 
 @app.on_event("startup")
@@ -208,7 +208,7 @@ async def contest_predict_records(
     :param query:
     :return:
     """
-    logger.info(f"{request.client=}")
+    logger.info(f"{request.client=} {query=}")
     MAX_USERS: Final[int] = 26
     contest = await Contest.find_one(Contest.titleSlug == query.contest_name)
     if not contest:
