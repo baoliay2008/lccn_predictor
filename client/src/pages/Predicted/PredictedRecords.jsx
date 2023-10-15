@@ -404,7 +404,9 @@ const PredictedRecordsTable = ({ predictedRecords, setUser }) => {
 const PredictedRecords = () => {
   const pageSize = 25; // hard code `pageSize` temporarily
 
-  const { titleSlug, pageNum } = useParams();
+  let { titleSlug, pageNum } = useParams();
+  pageNum = parseInt(pageNum);
+  
   const skipNum = pageSize * (pageNum - 1);
 
   const [predictedRecordsURL, setPredictedRecordsURL] = useState(null);
