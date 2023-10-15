@@ -1,7 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAnglesLeft, faAnglesRight } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 
-const Pagination = ({ totalCount, pageNum, setPageNum, pageSize }) => {
+const Pagination = ({ totalCount, pageNum, pageSize, titleSlug }) => {
   const maxPageNum = Math.ceil(totalCount / pageSize);
   return (
     <div
@@ -12,59 +13,58 @@ const Pagination = ({ totalCount, pageNum, setPageNum, pageSize }) => {
       }}
     >
       <div className="btn-group">
-        <button
+        <Link
+          to={`/predicted/${titleSlug}/1`}
           className={"btn " + (pageNum === 1 ? "btn-disabled" : "")}
-          onClick={() => setPageNum(1)}
         >
           <FontAwesomeIcon icon={faAnglesLeft} />
-        </button>
+        </Link>
         {pageNum - 4 >= 1 && pageNum >= maxPageNum && (
-          <button className="btn" onClick={() => setPageNum(pageNum - 4)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum - 4}`} className="btn">
             {pageNum - 4}
-          </button>
+          </Link>
         )}
         {pageNum - 3 >= 1 && pageNum >= maxPageNum - 1 && (
-          <button className="btn" onClick={() => setPageNum(pageNum - 3)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum - 3}`} className="btn">
             {pageNum - 3}
-          </button>
+          </Link>
         )}
         {pageNum - 2 >= 1 && (
-          <button className="btn" onClick={() => setPageNum(pageNum - 2)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum - 2}`} className="btn">
             {pageNum - 2}
-          </button>
+          </Link>
         )}
         {pageNum - 1 >= 1 && (
-          <button className="btn" onClick={() => setPageNum(pageNum - 1)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum - 1}`} className="btn">
             {pageNum - 1}
-          </button>
+          </Link>
         )}
         <button className="btn btn-active">{pageNum}</button>
         {pageNum + 1 <= maxPageNum && (
-          <button className="btn" onClick={() => setPageNum(pageNum + 1)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum + 1}`} className="btn">
             {pageNum + 1}
-          </button>
+          </Link>
         )}
         {pageNum + 2 <= maxPageNum && (
-          <button className="btn" onClick={() => setPageNum(pageNum + 2)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum + 2}`} className="btn">
             {pageNum + 2}
-          </button>
+          </Link>
         )}
         {pageNum + 3 <= maxPageNum && pageNum <= 2 && (
-          <button className="btn" onClick={() => setPageNum(pageNum + 3)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum + 3}`} className="btn">
             {pageNum + 3}
-          </button>
+          </Link>
         )}
         {pageNum + 4 <= maxPageNum && pageNum <= 1 && (
-          <button className="btn" onClick={() => setPageNum(pageNum + 4)}>
+          <Link to={`/predicted/${titleSlug}/${pageNum + 4}`} className="btn">
             {pageNum + 4}
-          </button>
+          </Link>
         )}
-        <button
+        <Link to={`/predicted/${titleSlug}/${maxPageNum}`}
           className={"btn " + (pageNum === maxPageNum ? "btn-disabled" : "")}
-          onClick={() => setPageNum(maxPageNum)}
         >
           <FontAwesomeIcon icon={faAnglesRight} />
-        </button>
+        </Link>
       </div>
     </div>
   );

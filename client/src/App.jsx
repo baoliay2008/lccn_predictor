@@ -44,7 +44,7 @@ function App() {
             <Routes>
               <Route path="/" element={<PredictedContest />} />
               <Route
-                path="/predicted/:titleSlug"
+                path="/predicted/:titleSlug/:pageNum"
                 element={<PredictedRecords />}
               />
             </Routes>
