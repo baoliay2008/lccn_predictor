@@ -4,7 +4,7 @@ import sys
 from asyncio import iscoroutinefunction
 from datetime import datetime, timedelta
 from functools import partial, wraps
-from typing import Any, Callable, Coroutine, Sequence
+from typing import Any, Callable, Coroutine, List, Sequence, Union
 
 from loguru import logger
 
@@ -12,14 +12,15 @@ from app.constants import BIWEEKLY_CONTEST_BASE, WEEKLY_CONTEST_BASE
 
 
 async def gather_with_limited_concurrency(
-    crts: Sequence[Coroutine], max_con_num: int = 10
-):
+    crts: Sequence[Coroutine], max_con_num: int = 10, return_exceptions: bool = False
+) -> List[Union[Exception, Any]]:
     """
     limit the concurrent number of tasks in `asyncio.gather`
     by using `asyncio.Semaphore`
-    :param crts:
-    :param max_con_num:
-    :return:
+    :param crts: coroutines
+    :param max_con_num: Maximum number of concurrent tasks
+    :param return_exceptions: Whether to return exceptions in the result
+    :return: List of results or exceptions
     """
 
     async def crt_with_semaphore(crt: Coroutine):
@@ -28,7 +29,7 @@ async def gather_with_limited_concurrency(
 
     semaphore = asyncio.Semaphore(max_con_num)
     tasks = [crt_with_semaphore(crt) for crt in crts]
-    await asyncio.gather(*tasks)
+    return await asyncio.gather(*tasks, return_exceptions=return_exceptions)
 
 
 def get_passed_weeks(t: datetime, base_t: datetime) -> int:
