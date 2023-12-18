@@ -168,8 +168,9 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
             "contest_name": contest_name,
         }
         question_objs = list()
-        for question in questions:
+        for idx, question in enumerate(questions):
             question.pop("id")
+            question.update({"qi": idx + 1})
             question_objs.append(Question.parse_obj(question | additional_fields))
         tasks = (
             Question.find_one(
@@ -182,6 +183,7 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
                         Question.title: question_obj.title,
                         Question.title_slug: question_obj.title_slug,
                         Question.update_time: question_obj.update_time,
+                        Question.qi: question_obj.qi,
                     }
                 ),
                 on_insert=question_obj,

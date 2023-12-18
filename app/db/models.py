@@ -16,6 +16,7 @@ class Question(Document):
     real_time_count: Optional[List[int]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
     contest_name: str
+    qi: int
 
     class Settings:
         indexes = [
