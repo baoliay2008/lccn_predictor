@@ -130,11 +130,12 @@ async def save_top_two_contests() -> None:
         f"https://leetcode.com/_next/data/{build_id}/contest.json"
     ).json()
     top_two_contests = list()
-    for d in (
+    for queries in (
         next_data.get("pageProps", {}).get("dehydratedState", {}).get("queries", {})
     ):
-        if "topTwoContests" in d.get("state", {}).get("data", {}):
-            top_two_contests = d.get("state", {}).get("data", {}).get("topTwoContests")
+        if "topTwoContests" in (data := queries.get("state", {}).get("data", {})):
+            top_two_contests = data.get("topTwoContests")
+            break
     if not top_two_contests:
         logger.error("cannot find topTwoContests")
         return
