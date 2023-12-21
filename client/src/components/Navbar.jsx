@@ -1,12 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCheck,
-  faHouse,
-  faPalette,
-  // faArrowUpRightDots,
-  // faBoxArchive,
-  // faCircleQuestion,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faHouse, faPalette } from "@fortawesome/free-solid-svg-icons";
 import { themes } from "../data/constants";
 import { DataThemeContext } from "../App";
 import { Link } from "react-router-dom";
@@ -15,14 +8,14 @@ import { useContext } from "react";
 const ThemeButton = () => {
   const { dataTheme, setDataTheme } = useContext(DataThemeContext);
   return (
-    <div className="dropdown dropdown-hover dropdown-bottom dropdown-end">
+    <div className="dropdown dropdown-end">
       <label tabIndex={0} className="btn m-1">
         <span className="hidden md:flex">Theme</span>
         <FontAwesomeIcon className="md:hidden" icon={faPalette} size="lg" />
       </label>
       <ul
         tabIndex={0}
-        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+        className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
       >
         {themes.map((t) => (
           <li

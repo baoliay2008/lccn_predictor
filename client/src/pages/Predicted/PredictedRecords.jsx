@@ -323,7 +323,7 @@ const PredictedRecordsTable = ({ predictedRecords, setUser }) => {
     <div className="overflow-x-auto">
       <table className="table table-compact w-full">
         <thead>
-          <tr>
+          <tr className="bg-base-200">
             <th>Rank</th>
             <th>Username</th>
             <th className="hidden md:table-cell">Region</th>

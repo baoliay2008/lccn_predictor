@@ -8,9 +8,9 @@ import { baseUrl } from "../../data/constants";
 const ContestsTable = ({ contests }) => {
   return (
     <div className="overflow-x-auto">
-      <table className="table w-full">
+      <table className="table">
         <thead>
-          <tr>
+          <tr className="bg-base-200">
             <th></th>
             <th>Predicted Contest</th>
             <th className="hidden md:table-cell">Started Time</th>
@@ -23,7 +23,7 @@ const ContestsTable = ({ contests }) => {
             <tr
               key={contest.titleSlug}
               className={
-                contest.titleSlug.startsWith("bi") ? "active" : undefined
+                contest.titleSlug.startsWith("bi") ? "bg-base-200" : undefined
               }
             >
               <th>{i + 1}</th>

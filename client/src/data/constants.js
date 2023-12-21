@@ -1,19 +1,23 @@
 export const baseUrl = "https://lccn.lbao.site/api/v1";
 
+// daisyui themes
 export const themes = [
   "light",
+  "wireframe",
   "acid",
-  "pastel",
+  "corporate",
+  "nord",
   "fantasy",
-  "autumn",
+  "pastel",
   "winter",
   "cyberpunk",
   "valentine",
-  "wireframe",
   "dark",
+  "business",
   "dracula",
-  "night",
   "halloween",
+  "dim",
+  "sunset",
 ];
 
 // trend color config of different regions

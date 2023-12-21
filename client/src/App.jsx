@@ -26,7 +26,7 @@ function App() {
         <BrowserRouter>
           <Navbar />
           <div className="container mx-auto">
-            <div className="grid h-20 card bg-base-300 rounded-box place-items-center">
+            <div className="grid h-20 bg-base-300 rounded-box place-items-center">
               <p>🤞 Leetcode contest rating predictor 👀</p>
               <a
                 className="grey-text text-lighten-3"
