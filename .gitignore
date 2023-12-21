@@ -139,29 +139,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-####################
-# Front-end dir: /client
-####################
-
-# Front-end dependencies
-/client/node_modules
-/client/.pnp
-.pnp.js
-
-# Front-end testing
-/client/coverage
-
-# Front-end production
-/client/build
-
-# Front-end misc
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Front-end log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
