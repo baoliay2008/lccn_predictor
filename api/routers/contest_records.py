@@ -126,7 +126,7 @@ async def contest_records_user(
 
 class RequestOfContestRecords(BaseModel):
     contest_name: str
-    users: conlist(KeyOfUser, min_items=1, max_items=26)
+    users: conlist(KeyOfUser, min_length=1, max_length=26)
 
 
 class ResultOfContestRecordPredict(BaseModel):

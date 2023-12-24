@@ -16,7 +16,9 @@ router = APIRouter(
 
 class RequestOfQuestions(BaseModel):
     contest_name: Optional[str] = None
-    question_id_list: Optional[conlist(NonNegativeInt, min_items=1, max_items=4)] = None
+    question_id_list: Optional[
+        conlist(NonNegativeInt, min_length=1, max_length=4)
+    ] = None
 
 
 @router.post("/")
