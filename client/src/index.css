@@ -17,6 +17,11 @@ code {
 @tailwind components;
 @tailwind utilities;
 
-.App {
-  text-align: center;
+/* To make the footer sticky at the bottom of the page
+   when the content height is less than the browser window height,
+   one workaround is to set the minimum height of major-content
+   to 100% of the viewport height.
+*/
+.major-content {
+  min-height: 100vh; /* 100% of the viewport height */
 }

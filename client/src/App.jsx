@@ -25,9 +25,9 @@ function App() {
       <div data-theme={dataTheme}>
         <BrowserRouter>
           <Navbar />
-          <div className="container mx-auto">
+          <div className="major-content container mx-auto">
             <div className="grid h-20 bg-base-300 rounded-box place-items-center">
-              <p>🤞 Leetcode contest rating predictor 👀</p>
+              <p>🤞 LeetCode contest rating predictor 👀</p>
               <a
                 className="grey-text text-lighten-3"
                 target="_blank"
