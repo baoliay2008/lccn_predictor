@@ -1,0 +1,26 @@
+version: 2
+updates:
+
+  # Check for updates to GitHub Actions every week
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "⬆️ chore(deps):"
+
+  # Check for updates to Python packages every month
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "⬆️ chore(deps):"
+
+  # Check for updates to JavaScript packages every month
+  - package-ecosystem: "npm"
+    directory: "/client"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "⬆️ chore(deps):"
