@@ -4,3 +4,6 @@
 
 # python
 venv/
+
+# root directory config
+/config.yaml
