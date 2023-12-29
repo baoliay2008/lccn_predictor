@@ -1,6 +1,10 @@
+from typing import Final
+
 import numpy as np
 
 from app.core.elo import elo_delta
+
+ELO_DELTA_PRECISION: Final[float] = 0.05
 
 
 def test_elo_delta():
@@ -14,7 +18,6 @@ def test_elo_delta():
     Raises:
         AssertionError: If not all errors are within the specified precision.
     """
-    PRECISION = 0.05
 
     with open("tests/test_data/contest_k_rating_test.npy", "rb") as f:
         data = np.load(f)
@@ -28,5 +31,5 @@ def test_elo_delta():
 
         errors = np.abs(new_ratings - testing_new_ratings)
         assert np.all(
-            errors < PRECISION
-        ), f"Elo delta test failed. Some errors are not within {PRECISION} precision."
+            errors < ELO_DELTA_PRECISION
+        ), f"Elo delta test failed. Some errors are not within {ELO_DELTA_PRECISION=}."
