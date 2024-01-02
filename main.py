@@ -2,8 +2,8 @@ import asyncio
 
 from loguru import logger
 
-from app.core.schedulers import start_scheduler
 from app.db.mongodb import start_async_mongodb
+from app.schedulers import start_scheduler
 from app.utils import start_loguru
 
 
