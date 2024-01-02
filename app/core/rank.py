@@ -206,7 +206,7 @@ async def save_submission(
             }
         submission_objs.extend(
             [
-                Submission.parse_obj(value_dict)
+                Submission.model_validate(value_dict)
                 for value_dict in nested_submission_dict.values()
             ]
         )

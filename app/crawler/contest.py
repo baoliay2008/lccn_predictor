@@ -30,7 +30,7 @@ async def multi_upsert_contests(
                 contest_dict["startTime"] + contest_dict["duration"]
             )
             logger.debug(f"{contest_dict=}")
-            contest = Contest.parse_obj(contest_dict)
+            contest = Contest.model_validate(contest_dict)
             logger.debug(f"{contest=}")
         except Exception as e:
             logger.exception(
@@ -171,7 +171,7 @@ async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None
         for idx, question in enumerate(questions):
             question.pop("id")
             question.update({"qi": idx + 1})
-            question_objs.append(Question.parse_obj(question | additional_fields))
+            question_objs.append(Question.model_validate(question | additional_fields))
         tasks = (
             Question.find_one(
                 Question.question_id == question_obj.question_id,

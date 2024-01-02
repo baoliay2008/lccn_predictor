@@ -125,7 +125,7 @@ async def save_predict_contest_records(
             continue
         unique_keys.add(key)
         user_rank_dict.update({"contest_name": contest_name})
-        user_rank = ContestRecordPredict.parse_obj(user_rank_dict)
+        user_rank = ContestRecordPredict.model_validate(user_rank_dict)
         user_rank_objs.append(user_rank)
     insert_tasks = (
         ContestRecordPredict.insert_one(user_rank) for user_rank in user_rank_objs
@@ -163,7 +163,7 @@ async def save_archive_contest_records(
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
-        user_rank = ContestRecordArchive.parse_obj(user_rank_dict)
+        user_rank = ContestRecordArchive.model_validate(user_rank_dict)
         user_rank_objs.append(user_rank)
     tasks = (
         ContestRecordArchive.find_one(
