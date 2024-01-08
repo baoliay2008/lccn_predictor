@@ -47,7 +47,7 @@ def check_cn_data_is_ready(
         return False
 
 
-async def request_contest_ranking(
+async def request_contest_records(
     contest_name: str,
     data_region: DATA_REGION,
 ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
@@ -110,7 +110,7 @@ async def save_predict_contest_records(
         _user_rank.attendedContestsCount = user.attendedContestsCount
         await _user_rank.save()
 
-    user_rank_list, _, _ = await request_contest_ranking(contest_name, data_region)
+    user_rank_list, _, _ = await request_contest_records(contest_name, data_region)
     user_rank_objs = list()
     # Full update, delete all old records
     await ContestRecordPredict.find(
@@ -159,7 +159,7 @@ async def save_archive_contest_records(
         user_rank_list,
         nested_submission_list,
         questions_list,
-    ) = await request_contest_ranking(contest_name, data_region)
+    ) = await request_contest_records(contest_name, data_region)
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
