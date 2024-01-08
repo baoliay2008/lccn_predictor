@@ -7,7 +7,7 @@ import httpx
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.core.rank import save_submission
+from app.crawler.submission import save_submission
 from app.crawler.users import save_users_of_contest
 from app.crawler.utils import multi_http_request
 from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredict, User

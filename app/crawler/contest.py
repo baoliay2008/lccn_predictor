@@ -1,6 +1,5 @@
 import asyncio
 import re
-from datetime import datetime
 from typing import Dict, List
 
 import httpx
@@ -8,7 +7,7 @@ from beanie.odm.operators.update.general import Set
 from loguru import logger
 
 from app.crawler.utils import multi_http_request
-from app.db.models import Contest, Question
+from app.db.models import Contest
 from app.utils import exception_logger_reraise
 
 
@@ -153,51 +152,3 @@ async def save_all_contests() -> None:
     await save_top_two_contests()
     await save_past_contests()
     logger.success("finished")
-
-
-async def fill_questions_field(contest_name: str, questions: List[Dict]) -> None:
-    """
-    For the past contests, fetch questions list and fill into MongoDB
-    :param contest_name:
-    :param questions:
-    :return:
-    """
-    try:
-        time_point = datetime.utcnow()
-        additional_fields = {
-            "contest_name": contest_name,
-        }
-        question_objs = list()
-        for idx, question in enumerate(questions):
-            question.pop("id")
-            question.update({"qi": idx + 1})
-            question_objs.append(Question.model_validate(question | additional_fields))
-        tasks = (
-            Question.find_one(
-                Question.question_id == question_obj.question_id,
-                Question.contest_name == contest_name,
-            ).upsert(
-                Set(
-                    {
-                        Question.credit: question_obj.credit,
-                        Question.title: question_obj.title,
-                        Question.title_slug: question_obj.title_slug,
-                        Question.update_time: question_obj.update_time,
-                        Question.qi: question_obj.qi,
-                    }
-                ),
-                on_insert=question_obj,
-            )
-            for question_obj in question_objs
-        )
-        await asyncio.gather(*tasks)
-        # Old questions may change, could delete here.
-        await Question.find(
-            Question.contest_name == contest_name,
-            Question.update_time < time_point,
-        ).delete()
-        logger.success("finished")
-    except Exception as e:
-        logger.error(
-            f"failed to fill questions fields for {contest_name=} {questions=} {e=}"
-        )
