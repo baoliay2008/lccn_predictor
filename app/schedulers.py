@@ -66,7 +66,7 @@ async def composed_predict_jobs(
     """
     tried_times = 1
     while (
-        not (cn_data_is_ready := check_cn_data_is_ready(contest_name))
+        not (cn_data_is_ready := await check_cn_data_is_ready(contest_name))
         and tried_times < max_try_times
     ):
         await asyncio.sleep(60)

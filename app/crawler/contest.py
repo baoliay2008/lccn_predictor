@@ -2,7 +2,6 @@ import asyncio
 import re
 from typing import Dict, List
 
-import httpx
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
@@ -92,12 +91,26 @@ async def multi_request_past_contests(
     return past_contests
 
 
+async def request_contest_homepage_text():
+    req = (
+        await multi_http_request(
+            {
+                "req": {
+                    "url": "https://leetcode.com/contest/",
+                    "method": "GET",
+                }
+            }
+        )
+    )[0]
+    return req.text
+
+
 async def save_past_contests() -> None:
     """
     Save past contests
     :return:
     """
-    contest_page_text = httpx.get("https://leetcode.com/contest/").text
+    contest_page_text = await request_contest_homepage_text()
     max_page_num_search = re.search(
         re.compile(r'"pageNum":\s*(\d+)'),
         contest_page_text,
@@ -116,7 +129,7 @@ async def save_top_two_contests() -> None:
     save two coming contests
     :return:
     """
-    contest_page_text = httpx.get("https://leetcode.com/contest/").text
+    contest_page_text = await request_contest_homepage_text()
     build_id_search = re.search(
         re.compile(r'"buildId":\s*"(.*?)",'),
         contest_page_text,
@@ -125,9 +138,16 @@ async def save_top_two_contests() -> None:
         logger.error("cannot find buildId")
         return
     build_id = build_id_search.groups()[0]
-    next_data = httpx.get(
-        f"https://leetcode.com/_next/data/{build_id}/contest.json"
-    ).json()
+    next_data = (
+        await multi_http_request(
+            {
+                "req": {
+                    "url": f"https://leetcode.com/_next/data/{build_id}/contest.json",
+                    "method": "GET",
+                }
+            }
+        )
+    )[0].json()
     top_two_contests = list()
     for queries in (
         next_data.get("pageProps", {}).get("dehydratedState", {}).get("queries", {})

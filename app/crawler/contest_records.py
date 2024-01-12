@@ -3,7 +3,6 @@ from datetime import datetime
 from math import ceil
 from typing import Dict, Final, List, Tuple
 
-import httpx
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
@@ -14,7 +13,7 @@ from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredic
 from app.utils import exception_logger_reraise
 
 
-def check_cn_data_is_ready(
+async def check_cn_data_is_ready(
     contest_name: str,
 ) -> bool:
     """
@@ -23,16 +22,28 @@ def check_cn_data_is_ready(
     :return:
     """
     try:
-        cn_data = httpx.get(
-            f"https://leetcode.cn/contest/api/ranking/{contest_name}/",
-            timeout=60,
-        ).json()
+        cn_data = (
+            await multi_http_request(
+                {
+                    "req": {
+                        "url": f"https://leetcode.cn/contest/api/ranking/{contest_name}/",
+                        "method": "GET",
+                    }
+                }
+            )
+        )[0].json()
         fallback_local = cn_data.get("fallback_local")
         if fallback_local is None:
-            us_data = httpx.get(
-                f"https://leetcode.com/contest/api/ranking/{contest_name}/",
-                timeout=60,
-            ).json()
+            us_data = (
+                await multi_http_request(
+                    {
+                        "req": {
+                            "url": f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+                            "method": "GET",
+                        }
+                    }
+                )
+            )[0].json()
             # check user_num in two different regions, if they are equal then return True
             is_satisfied = (cn_user_num := cn_data.get("user_num")) >= (
                 us_user_num := us_data.get("user_num")
@@ -61,10 +72,16 @@ async def request_contest_records(
         "https://leetcode.com" if data_region == "US" else "https://leetcode.cn"
     )
     logger.info(f"start {base_url=}")
-    req = httpx.get(
-        f"{base_url}/contest/api/ranking/{contest_name}/",
-        timeout=60,
-    )
+    req = (
+        await multi_http_request(
+            {
+                "req": {
+                    "url": f"{base_url}/contest/api/ranking/{contest_name}/",
+                    "method": "GET",
+                }
+            }
+        )
+    )[0]
     data = req.json()
     user_num = data.get("user_num")
     questions_list = data.get("questions")
