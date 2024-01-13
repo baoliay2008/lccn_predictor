@@ -2,28 +2,10 @@ from datetime import datetime
 from typing import List, Literal, Optional
 
 from beanie import Document
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pymongo import IndexModel
 
 DATA_REGION = Literal["CN", "US"]
-
-
-class Question(Document):
-    question_id: int
-    credit: int
-    title: str
-    title_slug: str
-    real_time_count: Optional[List[int]] = None
-    update_time: datetime = Field(default_factory=datetime.utcnow)
-    contest_name: str
-    qi: int
-
-    class Settings:
-        indexes = [
-            "question_id",
-            "title_slug",
-            "contest_name",
-        ]
 
 
 class Contest(Document):
@@ -81,26 +63,26 @@ class ContestRecordPredict(ContestRecord):
 
 class ContestRecordArchive(ContestRecord):
     # Archived records will be updated.
-    # Leetcode will rejudge some submissions(cheat detection, add test cases, etc.)
+    # LeetCode would rejudge some submissions(cheat detection, add test cases, etc.)
     update_time: datetime = Field(default_factory=datetime.utcnow)
     real_time_rank: Optional[list] = None
 
 
-class User(Document):
-    username: str
-    user_slug: str
-    data_region: DATA_REGION
-    attendedContestsCount: int
-    rating: float
+class Question(Document):
+    question_id: int
+    credit: int
+    title: str
+    title_slug: str
+    real_time_count: Optional[List[int]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
-    # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
+    contest_name: str
+    qi: int
 
     class Settings:
         indexes = [
-            "username",
-            "user_slug",
-            "data_region",
-            "rating",
+            "question_id",
+            "title_slug",
+            "contest_name",
         ]
 
 
@@ -128,6 +110,19 @@ class Submission(Document):
         ]
 
 
-class KeyOfUser(BaseModel):
+class User(Document):
     username: str
+    user_slug: str
     data_region: DATA_REGION
+    attendedContestsCount: int
+    rating: float
+    update_time: datetime = Field(default_factory=datetime.utcnow)
+    # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
+
+    class Settings:
+        indexes = [
+            "username",
+            "user_slug",
+            "data_region",
+            "rating",
+        ]

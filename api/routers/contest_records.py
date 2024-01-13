@@ -6,7 +6,8 @@ from loguru import logger
 from pydantic import BaseModel, NonNegativeInt, conint, conlist
 
 from api.utils import check_contest_name
-from app.db.models import ContestRecordArchive, ContestRecordPredict, KeyOfUser
+from app.db.models import ContestRecordArchive, ContestRecordPredict
+from app.db.views import UserKey
 
 router = APIRouter(
     prefix="/contest-records",
@@ -126,7 +127,7 @@ async def contest_records_user(
 
 class RequestOfContestRecords(BaseModel):
     contest_name: str
-    users: conlist(KeyOfUser, min_length=1, max_length=26)
+    users: conlist(UserKey, min_length=1, max_length=26)
 
 
 class ResultOfContestRecordPredict(BaseModel):
@@ -162,7 +163,7 @@ async def predicted_rating(
 
 class RequestOfRealTimeRank(BaseModel):
     contest_name: str
-    user: KeyOfUser
+    user: UserKey
 
 
 class ResultOfRealTimeRank(BaseModel):

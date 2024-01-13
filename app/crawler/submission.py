@@ -6,8 +6,9 @@ from loguru import logger
 
 from app.crawler.contest import save_all_contests
 from app.crawler.question import fill_questions_field, save_question_finish_count
-from app.db.models import ContestRecordArchive, KeyOfUser, Submission
+from app.db.models import ContestRecordArchive, Submission
 from app.db.mongodb import get_async_mongodb_collection
+from app.db.views import UserKey
 from app.utils import (
     exception_logger_reraise,
     gather_with_limited_concurrency,
@@ -92,7 +93,7 @@ async def save_real_time_rank(
             ContestRecordArchive.contest_name == contest_name,
             ContestRecordArchive.score != 0,  # No need to query users who have 0 score
         )
-        .project(KeyOfUser)
+        .project(UserKey)
         .to_list()
     )
     real_time_rank_map = {(user.username, user.data_region): list() for user in users}
