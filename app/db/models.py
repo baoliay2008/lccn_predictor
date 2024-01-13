@@ -5,6 +5,8 @@ from beanie import Document
 from pydantic import Field
 from pymongo import IndexModel
 
+from app.db.components import PredictionEvent
+
 DATA_REGION = Literal["CN", "US"]
 
 
@@ -17,6 +19,10 @@ class Contest(Document):
     past: bool
     update_time: datetime = Field(default_factory=datetime.utcnow)
     predict_time: Optional[datetime] = None
+    user_count_us: Optional[int] = None
+    user_count_cn: Optional[int] = None
+    convolution_array: Optional[int] = None
+    prediction_progress: Optional[List[PredictionEvent]] = None
 
     class Settings:
         indexes = [
