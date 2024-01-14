@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Counter, List, Literal, Optional, Tuple
 
 from beanie import Document
 from pydantic import Field
@@ -79,10 +79,23 @@ class Question(Document):
     credit: int
     title: str
     title_slug: str
-    real_time_count: Optional[List[int]] = None
     update_time: datetime = Field(default_factory=datetime.utcnow)
     contest_name: str
     qi: int
+    real_time_count: Optional[List[int]] = None
+    # For every question, save the quantiles of users' ratings who passed that question.
+    user_ratings_quantiles: Optional[List[float]] = None
+    # For every question, save the rating bins for users who passed each question.
+    # Each tuple represents a rating range, and the second element is the count of users within that range.
+    # For example, if 888 users have ratings in the range `[1100, 1150)`, the tuple would be `(1100, 888)`.
+    # The default range is 50, maintaining consistency with the distribution chart on LeetCode user homepages.
+    user_ratings_bins: Optional[List[Tuple[int, int]]] = None
+    average_fail_count: Optional[int] = None
+    lang_counter: Optional[Counter] = None
+    difficulty: Optional[float] = None
+    # For every question, save the first 10 users who finished this question
+    first_ten_users: Optional[List[Tuple[str, datetime]]] = None
+    topics: Optional[List[str]] = None
 
     class Settings:
         indexes = [
