@@ -62,7 +62,6 @@ async def contest_page_get(
     page: int = 1,
 ):
     logger.info(f"{request.client=} {contest_name=}, {page=}")
-    # TODO: check contest_name, notify invalid contest_name(eg. not started with weekly or biweekly)
     total_num = await ContestRecordPredict.find(
         ContestRecordPredict.contest_name == contest_name,
         ContestRecordPredict.score != 0,

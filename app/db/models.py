@@ -138,7 +138,6 @@ class User(Document):
     attendedContestsCount: int
     rating: float
     update_time: datetime = Field(default_factory=datetime.utcnow)
-    # TODO: add historical ranking field, save into an array. (ranking.length = attendedContestsCount)
 
     class Settings:
         indexes = [
