@@ -118,6 +118,8 @@ class Submission(Document):
     status: int
     contest_id: int
     update_time: datetime = Field(default_factory=datetime.utcnow)
+    # watch out: US data_region doesn't have `lang` field before weekly-contest-364
+    lang: Optional[str] = None
 
     class Settings:
         indexes = [
