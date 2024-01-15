@@ -17,4 +17,4 @@ class UserContestHistoryRecord(BaseModel):
     # Actually, `rating` here is `new_rating` in ContestRecord
     rating: float
     ranking: int
-    solved_question_id: Optional[List[int]] = None
+    solved_questions_id: Optional[List[int]] = None
