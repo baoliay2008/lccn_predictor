@@ -5,7 +5,7 @@ from beanie import Document
 from pydantic import Field
 from pymongo import IndexModel
 
-from app.db.components import PredictionEvent
+from app.db.components import PredictionEvent, UserContestHistoryRecord
 
 DATA_REGION = Literal["CN", "US"]
 
@@ -138,6 +138,7 @@ class User(Document):
     attendedContestsCount: int
     rating: float
     update_time: datetime = Field(default_factory=datetime.utcnow)
+    contest_history: Optional[List[UserContestHistoryRecord]] = None
 
     class Settings:
         indexes = [
