@@ -39,12 +39,16 @@ class ContestRecord(Document):
     contest_id: int
     username: str
     user_slug: str
+    data_region: DATA_REGION
     country_code: Optional[str] = None
     country_name: Optional[str] = None
     rank: int
     score: int
     finish_time: datetime
-    data_region: DATA_REGION
+    attendedContestsCount: Optional[int] = None
+    old_rating: Optional[float] = None
+    new_rating: Optional[float] = None
+    delta_rating: Optional[float] = None
 
     class Settings:
         indexes = [
@@ -60,16 +64,12 @@ class ContestRecordPredict(ContestRecord):
     # Predicted records' will be inserted only once, won't update any fields.
     # Records in this collection can be used to calculated MSE directly even after a long time because it won't change.
     insert_time: datetime = Field(default_factory=datetime.utcnow)
-    attendedContestsCount: Optional[int] = None
-    old_rating: Optional[float] = None
-    new_rating: Optional[float] = None
-    delta_rating: Optional[float] = None
     predict_time: Optional[datetime] = None
 
 
 class ContestRecordArchive(ContestRecord):
     # Archived records will be updated.
-    # LeetCode would rejudge some submissions(cheat detection, add test cases, etc.)
+    # LeetCode would rejudge some submissions(cheat detection, adding test cases, etc.)
     update_time: datetime = Field(default_factory=datetime.utcnow)
     real_time_rank: Optional[list] = None
 
