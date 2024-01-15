@@ -139,6 +139,7 @@ class User(Document):
     rating: float
     update_time: datetime = Field(default_factory=datetime.utcnow)
     contest_history: Optional[List[UserContestHistoryRecord]] = None
+    avatar_url: Optional[str] = None
 
     class Settings:
         indexes = [
