@@ -14,12 +14,12 @@ from app.constants import (
     CronTimePointWkdHrMin,
 )
 from app.core.predictor import predict_contest
-from app.crawler.contest import save_all_contests
 from app.crawler.contest_records import (
     check_cn_data_is_ready,
     save_archive_contest_records,
     save_predict_contest_records,
 )
+from app.handler.contest import save_recent_and_next_two_contests
 from app.utils import exception_logger_reraise, get_passed_weeks
 
 global_scheduler: Optional[AsyncIOScheduler] = None
@@ -154,7 +154,7 @@ async def scheduler_entry() -> None:
     ):
         # do other low-priority jobs such as updating user's rating and participated contest count.
         global_scheduler.add_job(
-            save_all_contests,
+            save_recent_and_next_two_contests,
             trigger="date",
             run_date=utc + timedelta(minutes=1),
         )
