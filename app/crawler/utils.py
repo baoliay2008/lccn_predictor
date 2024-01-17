@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict, deque
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from loguru import logger
@@ -21,9 +21,8 @@ async def multi_http_request(
     :param retry_num:
     :return:
     """
-    response_mapper = defaultdict(
-        int
-    )  # values means: [int: retried time / Response: successful result]
+    # response_mapper value means: [int: retried times / Response: successful result]
+    response_mapper: Dict[Any, int | httpx.Response] = defaultdict(int)
     crawler_queue = deque(multi_requests.items())
     total_num = len(crawler_queue)
     # gradually adjust wait_time by detect number of failed requests in the last round.
