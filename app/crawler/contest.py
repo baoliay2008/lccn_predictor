@@ -39,7 +39,7 @@ async def request_past_contests(
         past_contests.extend(
             response.json().get("data", {}).get("pastContests", {}).get("data", [])
         )
-    logger.success("finished")
+    logger.info(f"{max_page_num=} {len(past_contests)=}")
     return past_contests
 
 
@@ -57,7 +57,7 @@ async def request_contest_homepage_text():
     return req.text
 
 
-async def save_next_two_contests() -> List[Dict]:
+async def request_next_two_contests() -> List[Dict]:
     """
     save two coming contests
     :return:
@@ -95,7 +95,7 @@ async def save_next_two_contests() -> List[Dict]:
     return top_two_contests
 
 
-async def save_all_past_contests() -> List[Dict]:
+async def request_all_past_contests() -> List[Dict]:
     """
     Save past contests
     :return:
@@ -109,13 +109,15 @@ async def save_all_past_contests() -> List[Dict]:
         logger.error("cannot find pageNum")
         return []
     max_page_num = int(max_page_num_search.groups()[0])
-    return await request_past_contests(max_page_num)
+    all_past_contests = await request_past_contests(max_page_num)
+    return all_past_contests
 
 
-async def save_recent_contests() -> List[Dict]:
+async def request_recent_contests() -> List[Dict]:
     """
     Save 10 past contests on the first page
     :return:
     """
+    # 10 contests on the first page, which are enough
     ten_past_contests = await request_past_contests(1)
     return ten_past_contests

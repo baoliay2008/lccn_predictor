@@ -4,7 +4,7 @@ from typing import Dict, List
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.crawler.contest import save_next_two_contests, save_recent_contests
+from app.crawler.contest import request_next_two_contests, request_recent_contests
 from app.db.models import Contest
 from app.utils import exception_logger_reraise
 
@@ -60,8 +60,8 @@ async def save_recent_and_next_two_contests() -> None:
     :return:
     """
     # Send Http requests to same server, don't do it concurrently
-    top_two_contests = await save_next_two_contests()
-    ten_past_contests = await save_recent_contests()
+    top_two_contests = await request_next_two_contests()
+    ten_past_contests = await request_recent_contests()
     # Save them in database, do it concurrently
     await asyncio.gather(
         multi_upsert_contests(top_two_contests, past=False),
