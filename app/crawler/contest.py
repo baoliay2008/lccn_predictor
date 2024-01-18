@@ -1,9 +1,39 @@
 import re
-from typing import Dict, List
+from typing import Dict, Final, List, Optional
 
 from loguru import logger
 
 from app.crawler.utils import multi_http_request
+from app.db.models import DATA_REGION
+
+
+async def request_contest_user_num(
+    contest_name: str,
+    data_region: DATA_REGION,
+) -> Optional[int]:
+    """
+    Fetch user_num in a given data region
+    :param contest_name:
+    :param data_region:
+    :return:
+    """
+    url: Final[str] = (
+        f"https://leetcode.com/contest/api/ranking/{contest_name}/?region=us"
+        if data_region == "US"
+        else f"https://leetcode.cn/contest/api/ranking/{contest_name}/?region=cn"
+    )
+    data = (
+        await multi_http_request(
+            {
+                "req": {
+                    "url": url,
+                    "method": "GET",
+                }
+            }
+        )
+    )[0].json()
+    user_num = data.get("user_num")
+    return user_num
 
 
 async def request_past_contests(

@@ -19,7 +19,7 @@ from app.crawler.contest_records import (
     save_archive_contest_records,
     save_predict_contest_records,
 )
-from app.handler.contest import save_recent_and_next_two_contests
+from app.handler.contest import save_recent_and_next_two_contests, save_user_num
 from app.utils import exception_logger_reraise, get_passed_weeks
 
 global_scheduler: Optional[AsyncIOScheduler] = None
@@ -80,6 +80,7 @@ async def composed_predict_jobs(
     await save_archive_contest_records(
         contest_name=contest_name, data_region="CN", save_users=False
     )
+    await save_user_num(contest_name)
 
 
 async def pre_save_predict_users(contest_name: str) -> None:

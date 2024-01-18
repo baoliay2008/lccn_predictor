@@ -4,9 +4,13 @@ from typing import Dict, List
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.crawler.contest import request_next_two_contests, request_recent_contests
+from app.crawler.contest import (
+    request_contest_user_num,
+    request_next_two_contests,
+    request_recent_contests,
+)
 from app.db.models import Contest
-from app.utils import exception_logger_reraise
+from app.utils import exception_logger_reraise, exception_logger_silence
 
 
 async def multi_upsert_contests(
@@ -66,4 +70,28 @@ async def save_recent_and_next_two_contests() -> None:
     await asyncio.gather(
         multi_upsert_contests(top_two_contests, past=False),
         multi_upsert_contests(ten_past_contests, past=True),
+    )
+
+
+@exception_logger_silence
+async def save_user_num(
+    contest_name: str,
+) -> None:
+    """
+    Save user_num of US and CN data_region to database
+    :param contest_name:
+    :return:
+    """
+    user_num_us, user_num_cn = await asyncio.gather(
+        request_contest_user_num(contest_name, "US"),
+        request_contest_user_num(contest_name, "CN"),
+    )
+    logger.info(f"{user_num_us=} {user_num_cn=}")
+    await Contest.find_one(Contest.titleSlug == contest_name,).update(
+        Set(
+            {
+                Contest.user_num_us: user_num_us,
+                Contest.user_num_cn: user_num_cn,
+            }
+        )
     )
