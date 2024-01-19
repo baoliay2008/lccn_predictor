@@ -4,11 +4,11 @@ from typing import Dict, List, Tuple
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
-from app.crawler.question import fill_questions_field, save_question_finish_count
 from app.db.models import ContestRecordArchive, Submission
 from app.db.mongodb import get_async_mongodb_collection
 from app.db.views import UserKey
 from app.handler.contest import save_recent_and_next_two_contests
+from app.handler.question import save_questions, save_questions_real_time_count
 from app.utils import (
     exception_logger_reraise,
     gather_with_limited_concurrency,
@@ -147,7 +147,7 @@ async def save_submission(
     """
     time_point = datetime.utcnow()
     await save_recent_and_next_two_contests()
-    await fill_questions_field(contest_name, questions_list)
+    await save_questions(contest_name, questions_list)
     question_credit_mapper = {
         question["question_id"]: question["credit"] for question in questions_list
     }
@@ -195,5 +195,5 @@ async def save_submission(
         Submission.update_time < time_point,
     ).delete()
     logger.success("finished updating submissions, begin to save real_time_rank")
-    await save_question_finish_count(contest_name)
+    await save_questions_real_time_count(contest_name)
     await save_real_time_rank(contest_name)
