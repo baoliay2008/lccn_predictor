@@ -189,7 +189,7 @@ async def save_submission(
         for submission in submission_objs
     ]
     logger.info("updating Submission collection")
-    await gather_with_limited_concurrency(tasks, max_con_num=50)
+    await gather_with_limited_concurrency(tasks, max_con_num=20)
     # Old submissions may be rejudged, must be deleted here, or will cause error when plotting.
     await Submission.find(
         Submission.contest_name == contest_name,
