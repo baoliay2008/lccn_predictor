@@ -181,6 +181,7 @@ async def save_submission(
                     Submission.fail_count: submission.fail_count,
                     Submission.credit: submission.credit,
                     Submission.update_time: submission.update_time,
+                    Submission.lang: submission.lang,
                 }
             ),
             on_insert=submission,
