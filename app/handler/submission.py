@@ -27,52 +27,50 @@ async def aggregate_rank_at_time_point(
     :param time_point:
     :return:
     """
-    col = get_async_mongodb_collection(
-        Submission.__name__
-    )  # hard to use beanie here, so use raw MongoDB aggregation
+    # hard to use beanie here, so use raw MongoDB aggregation
+    col = get_async_mongodb_collection(Submission.__name__)
     rank_map = dict()
     last_credit_sum = None
     last_penalty_date = None
     tie_rank = raw_rank = 0
-    async for record in col.aggregate(
-        [
-            {"$match": {"contest_name": contest_name, "date": {"$lte": time_point}}},
-            {
-                "$group": {
-                    "_id": {"username": "$username", "data_region": "$data_region"},
-                    "credit_sum": {"$sum": "$credit"},
-                    "fail_count_sum": {"$sum": "$fail_count"},
-                    "date_max": {"$max": "$date"},
-                }
-            },
-            {
-                "$addFields": {
-                    "penalty_date": {
-                        "$dateAdd": {
-                            "startDate": "$date_max",
-                            "unit": "minute",
-                            "amount": {"$multiply": [5, "$fail_count_sum"]},
-                        }
-                    },
-                    "username": "$_id.username",
-                    "data_region": "$_id.data_region",
-                }
-            },
-            {"$unset": ["_id"]},
-            {"$sort": {"credit_sum": -1, "penalty_date": 1}},
-        ]
-    ):
+    pipeline = [
+        {"$match": {"contest_name": contest_name, "date": {"$lte": time_point}}},
+        {
+            "$group": {
+                "_id": {"username": "$username", "data_region": "$data_region"},
+                "credit_sum": {"$sum": "$credit"},
+                "fail_count_sum": {"$sum": "$fail_count"},
+                "date_max": {"$max": "$date"},
+            }
+        },
+        {
+            "$addFields": {
+                "penalty_date": {
+                    "$dateAdd": {
+                        "startDate": "$date_max",
+                        "unit": "minute",
+                        "amount": {"$multiply": [5, "$fail_count_sum"]},
+                    }
+                },
+                "username": "$_id.username",
+                "data_region": "$_id.data_region",
+            }
+        },
+        {"$unset": ["_id"]},
+        {"$sort": {"credit_sum": -1, "penalty_date": 1}},
+    ]
+    async for doc in col.aggregate(pipeline):
         raw_rank += 1
         if (
-            record["credit_sum"] == last_credit_sum
-            and record["penalty_date"] == last_penalty_date
+            doc["credit_sum"] == last_credit_sum
+            and doc["penalty_date"] == last_penalty_date
         ):
-            rank_map[(record["username"], record["data_region"])] = tie_rank
+            rank_map[(doc["username"], doc["data_region"])] = tie_rank
         else:
             tie_rank = raw_rank
-            rank_map[(record["username"], record["data_region"])] = raw_rank
-        last_credit_sum = record["credit_sum"]
-        last_penalty_date = record["penalty_date"]
+            rank_map[(doc["username"], doc["data_region"])] = raw_rank
+        last_credit_sum = doc["credit_sum"]
+        last_penalty_date = doc["penalty_date"]
     return rank_map, raw_rank
 
 
