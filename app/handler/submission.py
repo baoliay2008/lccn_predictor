@@ -58,6 +58,16 @@ async def aggregate_rank_at_time_point(
         },
         {"$unset": ["_id"]},
         {"$sort": {"credit_sum": -1, "penalty_date": 1}},
+        {
+            "$project": {
+                "_id": 0,
+                "data_region": 1,
+                "username": 1,
+                "credit_sum": 1,
+                "fail_count_sum": 1,
+                "penalty_date": 1,
+            }
+        },
     ]
     async for doc in col.aggregate(pipeline):
         raw_rank += 1
