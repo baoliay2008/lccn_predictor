@@ -1,7 +1,7 @@
 annotated-types==0.6.0
 anyio==3.7.1
 APScheduler==3.10.4
-beanie==1.23.6
+beanie==1.25.0
 certifi==2023.11.17
 click==8.1.7
 dnspython==2.4.2
