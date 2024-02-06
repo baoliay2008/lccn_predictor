@@ -7,7 +7,7 @@ from loguru import logger
 from app.crawler.contest_record_and_submission import request_contest_records
 from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredict, User
 from app.handler.submission import save_submission
-from app.handler.users import save_users_of_contest
+from app.handler.user import save_users_of_contest
 from app.utils import exception_logger_reraise
 
 

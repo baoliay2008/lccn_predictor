@@ -7,7 +7,7 @@ from app.constants import (
     DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT,
     DEFAULT_NEW_USER_RATING,
 )
-from app.crawler.users import request_user_rating_and_attended_contests_count
+from app.crawler.user import request_user_rating_and_attended_contests_count
 from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredict, User
 from app.db.mongodb import get_async_mongodb_collection
 from app.utils import exception_logger_reraise, gather_with_limited_concurrency
