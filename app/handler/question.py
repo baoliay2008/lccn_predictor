@@ -1,10 +1,11 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import List
 
 from beanie.odm.operators.update.general import Set
 from loguru import logger
 
+from app.crawler.question import request_question_list
 from app.db.models import Question, Submission
 from app.utils import get_contest_start_time
 
@@ -61,24 +62,23 @@ async def save_questions_real_time_count(
 
 async def save_questions(
     contest_name: str,
-    questions: List[Dict],
-) -> None:
+) -> List[Question]:
     """
     For the past contests, fetch questions list and fill into MongoDB
     :param contest_name:
-    :param questions:
     :return:
     """
     try:
+        question_list = await request_question_list(contest_name)
         time_point = datetime.utcnow()
         additional_fields = {
             "contest_name": contest_name,
         }
-        question_objs = list()
-        for idx, question in enumerate(questions):
+        questions = list()
+        for idx, question in enumerate(question_list):
             question.pop("id")
             question.update({"qi": idx + 1})
-            question_objs.append(Question.model_validate(question | additional_fields))
+            questions.append(Question.model_validate(question | additional_fields))
         tasks = (
             Question.find_one(
                 Question.question_id == question_obj.question_id,
@@ -95,7 +95,7 @@ async def save_questions(
                 ),
                 on_insert=question_obj,
             )
-            for question_obj in question_objs
+            for question_obj in questions
         )
         await asyncio.gather(*tasks)
         # Old questions may change, could delete here.
@@ -104,6 +104,7 @@ async def save_questions(
             Question.update_time < time_point,
         ).delete()
         logger.success("finished")
+        return questions
     except Exception as e:
         logger.error(
             f"failed to fill questions fields for {contest_name=} {questions=} {e=}"

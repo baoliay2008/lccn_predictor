@@ -143,21 +143,19 @@ async def save_submission(
     contest_name: str,
     user_rank_list: List[Dict],
     nested_submission_list: List[Dict],
-    questions_list: List[Dict],
 ) -> None:
     """
     Save all of submission-related data to MongoDB
     :param contest_name:
     :param user_rank_list:
     :param nested_submission_list:
-    :param questions_list:
     :return:
     """
     time_point = datetime.utcnow()
     await save_recent_and_next_two_contests()
-    await save_questions(contest_name, questions_list)
+    questions = await save_questions(contest_name)
     question_credit_mapper = {
-        question["question_id"]: question["credit"] for question in questions_list
+        question.question_id: question.credit for question in questions
     }
     submission_objs = list()
     for user_rank_dict, nested_submission_dict in zip(

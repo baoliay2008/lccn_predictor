@@ -10,7 +10,7 @@ from app.db.models import DATA_REGION
 async def request_contest_records(
     contest_name: str,
     data_region: DATA_REGION,
-) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+) -> Tuple[List[Dict], List[Dict]]:
     """
     Fetch all ranking records of a contest by sending http request per page concurrently
     :param contest_name:
@@ -33,7 +33,6 @@ async def request_contest_records(
     )[0]
     data = req.json()
     user_num = data.get("user_num")
-    questions_list = data.get("questions")
     page_max = ceil(user_num / 25)
     user_rank_list = list()
     nested_submission_list = list()
@@ -52,4 +51,4 @@ async def request_contest_records(
         user_rank_list.extend(res_dict.get("total_rank"))
         nested_submission_list.extend(res_dict.get("submissions"))
     logger.success("finished")
-    return user_rank_list, nested_submission_list, questions_list
+    return user_rank_list, nested_submission_list

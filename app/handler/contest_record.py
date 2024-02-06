@@ -32,7 +32,7 @@ async def save_predict_contest_records(
         _user_rank.attendedContestsCount = user.attendedContestsCount
         await _user_rank.save()
 
-    user_rank_list, _, _ = await request_contest_records(contest_name, data_region)
+    user_rank_list, _ = await request_contest_records(contest_name, data_region)
     user_rank_objs = list()
     # Full update, delete all old records
     await ContestRecordPredict.find(
@@ -77,11 +77,9 @@ async def save_archive_contest_records(
     :return:
     """
     time_point = datetime.utcnow()
-    (
-        user_rank_list,
-        nested_submission_list,
-        questions_list,
-    ) = await request_contest_records(contest_name, data_region)
+    (user_rank_list, nested_submission_list) = await request_contest_records(
+        contest_name, data_region
+    )
     user_rank_objs = list()
     for user_rank_dict in user_rank_list:
         user_rank_dict.update({"contest_name": contest_name})
@@ -115,6 +113,4 @@ async def save_archive_contest_records(
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
         logger.info(f"{save_users=}, will not save users")
-    await save_submission(
-        contest_name, user_rank_list, nested_submission_list, questions_list
-    )
+    await save_submission(contest_name, user_rank_list, nested_submission_list)
