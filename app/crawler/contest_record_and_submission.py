@@ -34,8 +34,8 @@ async def request_contest_records(
     data = req.json()
     user_num = data.get("user_num")
     page_max = ceil(user_num / 25)
-    user_rank_list = list()
-    nested_submission_list = list()
+    contest_record_list = list()
+    submission_list = list()
     url_list = [
         f"{base_url}/contest/api/ranking/{contest_name}/?pagination={page}&region=global"
         for page in range(1, page_max + 1)
@@ -48,7 +48,7 @@ async def request_contest_records(
         if res is None:
             continue
         res_dict = res.json()
-        user_rank_list.extend(res_dict.get("total_rank"))
-        nested_submission_list.extend(res_dict.get("submissions"))
+        contest_record_list.extend(res_dict.get("total_rank"))
+        submission_list.extend(res_dict.get("submissions"))
     logger.success("finished")
-    return user_rank_list, nested_submission_list
+    return contest_record_list, submission_list

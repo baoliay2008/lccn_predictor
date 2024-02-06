@@ -141,14 +141,14 @@ async def save_real_time_rank(
 @exception_logger_reraise
 async def save_submission(
     contest_name: str,
-    user_rank_list: List[Dict],
-    nested_submission_list: List[Dict],
+    contest_record_list: List[Dict],
+    submission_list: List[Dict],
 ) -> None:
     """
     Save all of submission-related data to MongoDB
     :param contest_name:
-    :param user_rank_list:
-    :param nested_submission_list:
+    :param contest_record_list:
+    :param submission_list:
     :return:
     """
     time_point = datetime.utcnow()
@@ -157,21 +157,21 @@ async def save_submission(
     question_credit_mapper = {
         question.question_id: question.credit for question in questions
     }
-    submission_objs = list()
-    for user_rank_dict, nested_submission_dict in zip(
-        user_rank_list, nested_submission_list
+    submissions = list()
+    for contest_record_dict, submission_dict in zip(
+        contest_record_list, submission_list
     ):
-        for k, value_dict in nested_submission_dict.items():
-            nested_submission_dict[k].pop("id")
-            nested_submission_dict[k] |= {
+        for k, value_dict in submission_dict.items():
+            submission_dict[k].pop("id")
+            submission_dict[k] |= {
                 "contest_name": contest_name,
-                "username": user_rank_dict["username"],
+                "username": contest_record_dict["username"],
                 "credit": question_credit_mapper[value_dict["question_id"]],
             }
-        submission_objs.extend(
+        submissions.extend(
             [
                 Submission.model_validate(value_dict)
-                for value_dict in nested_submission_dict.values()
+                for value_dict in submission_dict.values()
             ]
         )
     tasks = [
@@ -192,7 +192,7 @@ async def save_submission(
             ),
             on_insert=submission,
         )
-        for submission in submission_objs
+        for submission in submissions
     ]
     logger.info("updating Submission collection")
     await gather_with_limited_concurrency(tasks, max_con_num=20)

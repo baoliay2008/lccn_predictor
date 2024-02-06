@@ -23,42 +23,43 @@ async def save_predict_contest_records(
     :return:
     """
 
-    async def _fill_old_rating_and_count(_user_rank: ContestRecordPredict):
+    async def _fill_old_rating_and_count(_contest_record: ContestRecordPredict):
         user = await User.find_one(
-            User.username == _user_rank.username,
-            User.data_region == _user_rank.data_region,
+            User.username == _contest_record.username,
+            User.data_region == _contest_record.data_region,
         )
-        _user_rank.old_rating = user.rating
-        _user_rank.attendedContestsCount = user.attendedContestsCount
-        await _user_rank.save()
+        _contest_record.old_rating = user.rating
+        _contest_record.attendedContestsCount = user.attendedContestsCount
+        await _contest_record.save()
 
-    user_rank_list, _ = await request_contest_records(contest_name, data_region)
-    user_rank_objs = list()
+    contest_record_list, _ = await request_contest_records(contest_name, data_region)
+    contest_records = list()
     # Full update, delete all old records
     await ContestRecordPredict.find(
         ContestRecordPredict.contest_name == contest_name,
     ).delete()
     unique_keys = set()
-    for user_rank_dict in user_rank_list:
-        key = (user_rank_dict["data_region"], user_rank_dict["username"])
+    for contest_record_dict in contest_record_list:
+        key = (contest_record_dict["data_region"], contest_record_dict["username"])
         if key in unique_keys:
             # during the contest, request_contest_ranking may return duplicated records (user ranking is changing)
-            logger.warning(f"duplicated user record. {user_rank_dict=}")
+            logger.warning(f"duplicated user record. {contest_record_dict=}")
             continue
         unique_keys.add(key)
-        user_rank_dict.update({"contest_name": contest_name})
-        user_rank = ContestRecordPredict.model_validate(user_rank_dict)
-        user_rank_objs.append(user_rank)
+        contest_record_dict.update({"contest_name": contest_name})
+        contest_record = ContestRecordPredict.model_validate(contest_record_dict)
+        contest_records.append(contest_record)
     insert_tasks = (
-        ContestRecordPredict.insert_one(user_rank) for user_rank in user_rank_objs
+        ContestRecordPredict.insert_one(contest_record)
+        for contest_record in contest_records
     )
     await asyncio.gather(*insert_tasks)
     await save_users_of_contest(contest_name=contest_name, predict=True)
     # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
     fill_tasks = (
-        _fill_old_rating_and_count(user_rank)
-        for user_rank in user_rank_objs
-        if user_rank.score != 0
+        _fill_old_rating_and_count(contest_record)
+        for contest_record in contest_records
+        if contest_record.score != 0
     )
     await asyncio.gather(*fill_tasks)
 
@@ -77,31 +78,31 @@ async def save_archive_contest_records(
     :return:
     """
     time_point = datetime.utcnow()
-    (user_rank_list, nested_submission_list) = await request_contest_records(
+    (contest_record_list, submission_list) = await request_contest_records(
         contest_name, data_region
     )
-    user_rank_objs = list()
-    for user_rank_dict in user_rank_list:
-        user_rank_dict.update({"contest_name": contest_name})
-        user_rank = ContestRecordArchive.model_validate(user_rank_dict)
-        user_rank_objs.append(user_rank)
+    contest_records = list()
+    for contest_record_dict in contest_record_list:
+        contest_record_dict.update({"contest_name": contest_name})
+        contest_record = ContestRecordArchive.model_validate(contest_record_dict)
+        contest_records.append(contest_record)
     tasks = (
         ContestRecordArchive.find_one(
-            ContestRecordArchive.contest_name == user_rank.contest_name,
-            ContestRecordArchive.username == user_rank.username,
-            ContestRecordArchive.data_region == user_rank.data_region,
+            ContestRecordArchive.contest_name == contest_record.contest_name,
+            ContestRecordArchive.username == contest_record.username,
+            ContestRecordArchive.data_region == contest_record.data_region,
         ).upsert(
             Set(
                 {
-                    ContestRecordArchive.rank: user_rank.rank,
-                    ContestRecordArchive.score: user_rank.score,
-                    ContestRecordArchive.finish_time: user_rank.finish_time,
-                    ContestRecordArchive.update_time: user_rank.update_time,
+                    ContestRecordArchive.rank: contest_record.rank,
+                    ContestRecordArchive.score: contest_record.score,
+                    ContestRecordArchive.finish_time: contest_record.finish_time,
+                    ContestRecordArchive.update_time: contest_record.update_time,
                 }
             ),
-            on_insert=user_rank,
+            on_insert=contest_record,
         )
-        for user_rank in user_rank_objs
+        for contest_record in contest_records
     )
     await asyncio.gather(*tasks)
     # remove old records
@@ -113,4 +114,4 @@ async def save_archive_contest_records(
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
         logger.info(f"{save_users=}, will not save users")
-    await save_submission(contest_name, user_rank_list, nested_submission_list)
+    await save_submission(contest_name, contest_record_list, submission_list)
