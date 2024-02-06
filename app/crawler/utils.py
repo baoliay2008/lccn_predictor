@@ -13,7 +13,7 @@ async def multi_http_request(
 ) -> List[Optional[httpx.Response]]:
     """
     Simple HTTP requests queue with speed control and retry automatically, hopefully can get corresponding response.
-    Failed response would be `None` but not a `response` object.
+    Failed response would be `None` but not a `response` object, so invokers MUST verify for None values.
     Notice that `multi_requests` is `Dict` but not `Sequence` so that data accessing would be easier.
     Because all the stuff are in memory, so DO NOT pass a long `multi_requests` in especially when `response` is huge.
     :param multi_requests:

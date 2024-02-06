@@ -9,6 +9,7 @@ from app.crawler.contest import (
     request_next_two_contests,
     request_recent_contests,
 )
+from app.crawler.utils import multi_http_request
 from app.db.models import Contest
 from app.utils import exception_logger_reraise, exception_logger_silence
 
@@ -95,3 +96,48 @@ async def save_user_num(
             }
         )
     )
+
+
+async def is_cn_contest_data_ready(
+    contest_name: str,
+) -> bool:
+    """
+    Check data from CN region when contest finished, if it is ready then return True
+    :param contest_name:
+    :return:
+    """
+    try:
+        cn_data = (
+            await multi_http_request(
+                {
+                    "req": {
+                        "url": f"https://leetcode.cn/contest/api/ranking/{contest_name}/",
+                        "method": "GET",
+                    }
+                }
+            )
+        )[0].json()
+        fallback_local = cn_data.get("fallback_local")
+        if fallback_local is None:
+            us_data = (
+                await multi_http_request(
+                    {
+                        "req": {
+                            "url": f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+                            "method": "GET",
+                        }
+                    }
+                )
+            )[0].json()
+            # check user_num in two different regions, if they are equal then return True
+            is_satisfied = (cn_user_num := cn_data.get("user_num")) >= (
+                us_user_num := us_data.get("user_num")
+            )
+            logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
+            return is_satisfied
+        else:
+            logger.info(f"check {fallback_local=} unsatisfied")
+            return False
+    except Exception as e:
+        logger.error(f"check fallback_local error={e}")
+        return False

@@ -14,12 +14,15 @@ from app.constants import (
     CronTimePointWkdHrMin,
 )
 from app.core.predictor import predict_contest
-from app.crawler.contest_records import (
-    check_cn_data_is_ready,
+from app.handler.contest import (
+    is_cn_contest_data_ready,
+    save_recent_and_next_two_contests,
+    save_user_num,
+)
+from app.handler.contest_record import (
     save_archive_contest_records,
     save_predict_contest_records,
 )
-from app.handler.contest import save_recent_and_next_two_contests, save_user_num
 from app.utils import exception_logger_reraise, get_passed_weeks
 
 global_scheduler: Optional[AsyncIOScheduler] = None
@@ -66,7 +69,7 @@ async def composed_predict_jobs(
     """
     tried_times = 1
     while (
-        not (cn_data_is_ready := await check_cn_data_is_ready(contest_name))
+        not (cn_data_is_ready := await is_cn_contest_data_ready(contest_name))
         and tried_times < max_try_times
     ):
         await asyncio.sleep(60)
