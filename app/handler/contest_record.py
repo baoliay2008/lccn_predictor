@@ -78,7 +78,7 @@ async def save_archive_contest_records(
     :return:
     """
     time_point = datetime.utcnow()
-    (contest_record_list, submission_list) = await request_contest_records(
+    (contest_record_list, nested_submission_list) = await request_contest_records(
         contest_name, data_region
     )
     contest_records = list()
@@ -114,4 +114,4 @@ async def save_archive_contest_records(
         await save_users_of_contest(contest_name=contest_name, predict=False)
     else:
         logger.info(f"{save_users=}, will not save users")
-    await save_submission(contest_name, contest_record_list, submission_list)
+    await save_submission(contest_name, contest_record_list, nested_submission_list)

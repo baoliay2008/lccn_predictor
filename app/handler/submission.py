@@ -142,13 +142,13 @@ async def save_real_time_rank(
 async def save_submission(
     contest_name: str,
     contest_record_list: List[Dict],
-    submission_list: List[Dict],
+    nested_submission_list: List[Dict],
 ) -> None:
     """
     Save all of submission-related data to MongoDB
     :param contest_name:
     :param contest_record_list:
-    :param submission_list:
+    :param nested_submission_list:
     :return:
     """
     time_point = datetime.utcnow()
@@ -158,20 +158,20 @@ async def save_submission(
         question.question_id: question.credit for question in questions
     }
     submissions = list()
-    for contest_record_dict, submission_dict in zip(
-        contest_record_list, submission_list
+    for contest_record_dict, nested_submission_dict in zip(
+        contest_record_list, nested_submission_list
     ):
-        for k, value_dict in submission_dict.items():
-            submission_dict[k].pop("id")
-            submission_dict[k] |= {
+        for question_id, submission_dict in nested_submission_dict.items():
+            submission_dict.pop("id")
+            submission_dict |= {
                 "contest_name": contest_name,
                 "username": contest_record_dict["username"],
-                "credit": question_credit_mapper[value_dict["question_id"]],
+                "credit": question_credit_mapper[question_id],
             }
         submissions.extend(
             [
-                Submission.model_validate(value_dict)
-                for value_dict in submission_dict.values()
+                Submission.model_validate(submission_dict)
+                for submission_dict in nested_submission_dict.values()
             ]
         )
     tasks = [
