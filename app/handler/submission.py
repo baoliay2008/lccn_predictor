@@ -166,7 +166,7 @@ async def save_submission(
             submission_dict |= {
                 "contest_name": contest_name,
                 "username": contest_record_dict["username"],
-                "credit": question_credit_mapper[question_id],
+                "credit": question_credit_mapper[int(question_id)],
             }
         submissions.extend(
             [
