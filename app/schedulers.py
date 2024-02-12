@@ -59,7 +59,7 @@ async def save_last_two_contest_records() -> None:
 @exception_logger_reraise
 async def composed_predict_jobs(
     contest_name: str,
-    max_try_times: int = 25,
+    max_try_times: int = 300,
 ) -> None:
     """
     All three steps which should be run when the contest is just over
