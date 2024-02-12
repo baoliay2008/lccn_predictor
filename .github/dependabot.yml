@@ -16,6 +16,10 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "⬆️ chore(deps):"
+    groups:
+      all:
+        patterns:
+          - "*"
 
   # Check for updates to JavaScript packages every month
   - package-ecosystem: "npm"
@@ -24,3 +28,7 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "⬆️ chore(deps):"
+    groups:
+      all:
+        patterns:
+          - "*"
