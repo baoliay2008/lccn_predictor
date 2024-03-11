@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 from beanie.odm.operators.update.general import Set
@@ -8,7 +7,7 @@ from app.crawler.contest_record_and_submission import request_contest_records
 from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredict, User
 from app.handler.submission import save_submission
 from app.handler.user import save_users_of_contest
-from app.utils import exception_logger_reraise
+from app.utils import exception_logger_reraise, gather_with_limited_concurrency
 
 
 @exception_logger_reraise
@@ -49,19 +48,19 @@ async def save_predict_contest_records(
         contest_record_dict.update({"contest_name": contest_name})
         contest_record = ContestRecordPredict.model_validate(contest_record_dict)
         contest_records.append(contest_record)
-    insert_tasks = (
+    insert_tasks = [
         ContestRecordPredict.insert_one(contest_record)
         for contest_record in contest_records
-    )
-    await asyncio.gather(*insert_tasks)
+    ]
+    await gather_with_limited_concurrency(insert_tasks, max_con_num=50)
     await save_users_of_contest(contest_name=contest_name, predict=True)
     # fill rating and attended count, must be called after save_users_of_contest and before predict_contest,
-    fill_tasks = (
+    fill_tasks = [
         _fill_old_rating_and_count(contest_record)
         for contest_record in contest_records
         if contest_record.score != 0
-    )
-    await asyncio.gather(*fill_tasks)
+    ]
+    await gather_with_limited_concurrency(fill_tasks, max_con_num=50)
 
 
 @exception_logger_reraise
@@ -86,7 +85,7 @@ async def save_archive_contest_records(
         contest_record_dict.update({"contest_name": contest_name})
         contest_record = ContestRecordArchive.model_validate(contest_record_dict)
         contest_records.append(contest_record)
-    tasks = (
+    tasks = [
         ContestRecordArchive.find_one(
             ContestRecordArchive.contest_name == contest_record.contest_name,
             ContestRecordArchive.username == contest_record.username,
@@ -103,8 +102,8 @@ async def save_archive_contest_records(
             on_insert=contest_record,
         )
         for contest_record in contest_records
-    )
-    await asyncio.gather(*tasks)
+    ]
+    await gather_with_limited_concurrency(tasks, max_con_num=50)
     # remove old records
     await ContestRecordArchive.find(
         ContestRecordArchive.contest_name == contest_name,
