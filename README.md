@@ -1,21 +1,24 @@
 
 # Introduction
 
-This is a `Leetcode` weekly and biweekly contest rating predictor. The APP is available online at [🔗 lccn.lbao.site](https://lccn.lbao.site/)
+This is a LeetCode weekly and biweekly contest rating predictor. The APP is available online at [🔗 lccn.lbao.site](https://lccn.lbao.site/)
 
-Hopefully, you can get the predicted result within 15-30 minutes after the contest has finished.
+Hopefully, you can get the predicted result within **15-30 minutes** after the contest has finished.
 
 ## Features
+
 * ⚡️ Fast
-  > 1. The core prediction algorithm is accelerated by a JIT compiler([Numba](https://numba.pydata.org/)) which costs around 20 seconds on a two-cores *Intel(R) Xeon(R) Platinum 8255C CPU* (@ 2.50GHz).
-  > 2. User's latest rating was **cached** several times before predicting which can save a lot of time fetching data.
+  * The core Elo rating algorithm is significantly enhanced by a **Just-In-Time (JIT) compiler** through [Numba](https://numba.pydata.org), reducing execution time to approximately 20 seconds on a dual-core *Intel(R) Xeon(R) Platinum 8255C CPU* (@ 2.50GHz).
+  * In addition to the JIT implementation, this project incorporates a [Fast Fourier Transform (FFT) implementation](https://github.com/baoliay2008/lccn_predictor/pull/43). The Elo rating system employed by LeetCode benefits significantly from the FFT algorithm, achieving speedups ranging from **65 to 1,000 times** for individual contest predictions. The most efficient FFT implementation (`EXPAND_SIZE=1`) completes predictions in under **0.25 seconds**, maintaining an impressively low Mean Squared Error (MSE) of approximately 0.027.
+  * **Caching** the user's latest rating before initiating the prediction process leads to a substantial reduction in the time required for data retrieval.
 * 🎯 Accurate
-  > 1. If there were no massive rejudges(say, everyone's global ranking stays unchanged), the rating difference should be negligible.
-  > 2. Please note that a normal case is that there would be some misconduct detection, so your global ranking will be slightly higher even if your submissions are not rejudged, which results in a slightly higher rating :)
+  * If there were no significant rejudges (assuming everyone's global ranking remains unchanged), it is ensured that the prediction error for rating deltas for **EACH** participant is within the precision limit of 0.05. As a result, the rating difference should be negligible.
+  * Please note that a normal case is that there would be some misconduct detection, so your global ranking will be slightly higher even if your submissions are not rejudged, which results in a slightly higher rating :)
 * 📱 Responsive web page
-  > Tested on phones and tablets.
+  * Tested on phones and tablets.
 
 ## More Information
+
 * [🔗 Chinese introduction on leetcode.cn](https://leetcode.cn/circle/discuss/2Ibimx/)
 * [🔗 refined-leetcode](https://github.com/XYShaoKang/refined-leetcode): A Chrome extension for leetcode.**cn**, created by [@XYShaoKang](https://github.com/XYShaoKang)
 
@@ -25,6 +28,8 @@ Hopefully, you can get the predicted result within 15-30 minutes after the conte
 
 * [🔗 English official illustration on leetcode.com](https://leetcode.com/discuss/general-discussion/468851/New-Contest-Rating-Algorithm-(Coming-Soon))
 * [🔗 Chinese official illustration on leetcode.cn](https://leetcode.cn/circle/article/neTUV4/)
+* 🔗 Detailed post about FFT acceleration
+  - ❤️ Special thanks to [@tiger2005](https://github.com/tiger2005) for proposing this idea in [issue #8](https://github.com/baoliay2008/lccn_predictor/issues/8)
 
 ## Database
 
