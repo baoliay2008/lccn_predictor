@@ -7,7 +7,7 @@ from loguru import logger
 
 from app.crawler.question import request_question_list
 from app.db.models import Question, Submission
-from app.utils import get_contest_start_time
+from app.utils import gather_with_limited_concurrency, get_contest_start_time
 
 
 async def real_time_count_at_time_point(
@@ -49,13 +49,13 @@ async def save_questions_real_time_count(
         Question.contest_name == contest_name,
     ).to_list()
     for question in questions:
-        tasks = (
+        tasks = [
             real_time_count_at_time_point(
                 contest_name, question.question_id, time_point
             )
             for time_point in time_series
-        )
-        question.real_time_count = await asyncio.gather(*tasks)
+        ]
+        question.real_time_count = await gather_with_limited_concurrency(tasks)
         await question.save()
     logger.success("finished")
 

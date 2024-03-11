@@ -129,6 +129,6 @@ async def save_users_of_contest(
         [
             # CN site has a strong rate limit
             gather_with_limited_concurrency(cn_tasks, 1),
-            gather_with_limited_concurrency(us_tasks, 8),
+            gather_with_limited_concurrency(us_tasks, 1),
         ],
     )

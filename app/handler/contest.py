@@ -11,7 +11,11 @@ from app.crawler.contest import (
 )
 from app.crawler.utils import multi_http_request
 from app.db.models import Contest
-from app.utils import exception_logger_reraise, exception_logger_silence
+from app.utils import (
+    exception_logger_reraise,
+    exception_logger_silence,
+    gather_with_limited_concurrency,
+)
 
 
 async def multi_upsert_contests(
@@ -54,7 +58,7 @@ async def multi_upsert_contests(
                 on_insert=contest,
             )
         )
-    await asyncio.gather(*tasks)
+    await gather_with_limited_concurrency(tasks)
     logger.success("finished")
 
 
