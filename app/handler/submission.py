@@ -7,7 +7,6 @@ from loguru import logger
 from app.db.models import ContestRecordArchive, Submission
 from app.db.mongodb import get_async_mongodb_collection
 from app.db.views import UserKey
-from app.handler.contest import save_recent_and_next_two_contests
 from app.handler.question import save_questions, save_questions_real_time_count
 from app.utils import (
     exception_logger_reraise,
@@ -152,7 +151,6 @@ async def save_submission(
     :return:
     """
     time_point = datetime.utcnow()
-    await save_recent_and_next_two_contests()
     questions = await save_questions(contest_name)
     question_credit_mapper = {
         question.question_id: question.credit for question in questions

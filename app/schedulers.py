@@ -78,6 +78,7 @@ async def composed_predict_jobs(
         logger.error(
             f"give up after failed {tried_times=} times. CONTINUE WITH INCOMPLETE DATA"
         )
+    await save_recent_and_next_two_contests()
     await save_predict_contest_records(contest_name=contest_name, data_region="CN")
     await predict_contest(contest_name=contest_name)
     await save_archive_contest_records(
