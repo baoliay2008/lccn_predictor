@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-class RequestOfQuestions(BaseModel):
+class QueryOfQuestions(BaseModel):
     contest_name: Optional[str] = None
     question_id_list: Optional[
         conlist(NonNegativeInt, min_length=1, max_length=4)
@@ -24,7 +24,7 @@ class RequestOfQuestions(BaseModel):
 @router.post("/")
 async def questions(
     request: Request,
-    query: RequestOfQuestions,
+    query: QueryOfQuestions,
 ) -> List[Question]:
     """
     Query questions for a given contest.

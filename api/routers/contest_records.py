@@ -125,12 +125,12 @@ async def contest_records_user(
     return records
 
 
-class RequestOfContestRecords(BaseModel):
+class QueryOfPredictedRating(BaseModel):
     contest_name: str
     users: conlist(UserKey, min_length=1, max_length=26)
 
 
-class ResultOfContestRecordPredict(BaseModel):
+class ResultOfPredictedRating(BaseModel):
     old_rating: Optional[float] = None
     new_rating: Optional[float] = None
     delta_rating: Optional[float] = None
@@ -139,8 +139,8 @@ class ResultOfContestRecordPredict(BaseModel):
 @router.post("/predicted-rating")  # formal route
 async def predicted_rating(
     request: Request,
-    query: RequestOfContestRecords,
-) -> List[Optional[ResultOfContestRecordPredict]]:
+    query: QueryOfPredictedRating,
+) -> List[Optional[ResultOfPredictedRating]]:
     """
     Query multiple predicted records in a contest.
     :param request:
@@ -154,14 +154,14 @@ async def predicted_rating(
             ContestRecordPredict.contest_name == query.contest_name,
             ContestRecordPredict.data_region == user.data_region,
             ContestRecordPredict.username == user.username,
-            projection_model=ResultOfContestRecordPredict,
+            projection_model=ResultOfPredictedRating,
         )
         for user in query.users
     )
     return await asyncio.gather(*tasks)
 
 
-class RequestOfRealTimeRank(BaseModel):
+class QueryOfRealTimeRank(BaseModel):
     contest_name: str
     user: UserKey
 
@@ -173,7 +173,7 @@ class ResultOfRealTimeRank(BaseModel):
 @router.post("/real-time-rank")
 async def real_time_rank(
     request: Request,
-    query: RequestOfRealTimeRank,
+    query: QueryOfRealTimeRank,
 ) -> ResultOfRealTimeRank:
     """
     Query user's realtime rank list of a given contest.
