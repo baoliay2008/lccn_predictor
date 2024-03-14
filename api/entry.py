@@ -36,11 +36,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logger.info(
-        f"Received request: {request.client.host} {request.method} {request.url.path}"
-    )
     t1 = time.time()
     response = await call_next(request)
     t2 = time.time()
-    logger.info(f"Cost {(t2 - t1) * 1e3:.2f} ms {response.status_code=}")
+    logger.info(
+        f"Received request: {request.client.host} {request.method} {request.url.path} "
+        f"Cost {(t2 - t1) * 1e3:.2f} ms {response.status_code=}"
+    )
     return response

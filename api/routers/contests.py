@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Request
-from loguru import logger
 from pydantic import BaseModel, NonNegativeInt, conint
 
 from app.db.models import Contest
@@ -56,7 +55,6 @@ async def contests_count(
     :param archived:
     :return:
     """
-    logger.info(f"{request.client=}")
     if archived:
         total_num = await Contest.count()
     else:
@@ -83,7 +81,6 @@ async def contests(
     :param limit:
     :return:
     """
-    logger.info(f"{request.client=}")
     if archived:
         records = (
             await Contest.find_all()

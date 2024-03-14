@@ -33,7 +33,6 @@ async def questions(
     :param query:
     :return:
     """
-    logger.info(f"{request.client=}")
     if not (bool(query.contest_name) ^ bool(query.question_id_list)):
         msg = "contest_name OR question_id_list must be given!"
         logger.error(msg)

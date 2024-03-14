@@ -2,7 +2,6 @@ import asyncio
 from typing import List, Optional
 
 from fastapi import APIRouter, Request
-from loguru import logger
 from pydantic import BaseModel, NonNegativeInt, conint, conlist
 
 from api.utils import check_contest_name
@@ -30,7 +29,6 @@ async def contest_records_count(
     :param archived:
     :return:
     """
-    logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
         total_num = await ContestRecordPredict.find(
@@ -64,7 +62,6 @@ async def contest_records(
     :param limit:
     :return:
     """
-    logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
         records = (
@@ -108,7 +105,6 @@ async def contest_records_user(
     :param archived:
     :return:
     """
-    logger.info(f"{request.client=}")
     await check_contest_name(contest_name)
     if not archived:
         records = await ContestRecordPredict.find(
@@ -147,7 +143,6 @@ async def predicted_rating(
     :param query:
     :return:
     """
-    logger.info(f"{request.client=} {request.url.path=}")
     await check_contest_name(query.contest_name)
     tasks = (
         ContestRecordPredict.find_one(
@@ -181,7 +176,6 @@ async def real_time_rank(
     :param query:
     :return:
     """
-    logger.info(f"{request.client=}")
     await check_contest_name(query.contest_name)
     return await ContestRecordArchive.find_one(
         ContestRecordArchive.contest_name == query.contest_name,
