@@ -1,8 +1,7 @@
 import time
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 from loguru import logger
 
 from app.config import get_yaml_config
@@ -45,25 +44,3 @@ async def log_requests(request: Request, call_next):
     t2 = time.time()
     logger.info(f"Cost {(t2 - t1) * 1e3:.2f} ms {response.status_code=}")
     return response
-
-
-# Redirect Old API to new one
-legacy_router = APIRouter(
-    tags=["legacy_apis"],
-)
-
-
-@legacy_router.post("/predict_records")
-async def legacy_predicted_rating(request: Request):
-    """
-    This api is a legacy api for third-party projects like https://github.com/XYShaoKang/refined-leetcode
-    Just do nothing but redirecting to new API
-    :return:
-    """
-    base_url = str(request.base_url)[:-1]
-    new_path = app.url_path_for("predicted_rating")
-    new_url = base_url + new_path
-    return RedirectResponse(new_url)
-
-
-app.include_router(legacy_router)
