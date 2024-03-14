@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Request
 from loguru import logger
-from pydantic import NonNegativeInt, conint
+from pydantic import BaseModel, NonNegativeInt, conint
 
 from app.db.models import Contest
 
@@ -11,6 +11,36 @@ router = APIRouter(
     prefix="/contests",
     tags=["contests"],
 )
+
+
+class ResultOfContestsUserNum(BaseModel):
+    titleSlug: str
+    title: str
+    startTime: datetime
+    user_num_us: Optional[int] = None
+    user_num_cn: Optional[int] = None
+
+
+@router.get("/user-num-last-ten")
+async def contests_user_num_last_ten(
+    request: Request,
+) -> List[ResultOfContestsUserNum]:
+    """
+    Obtain user counts from both the US and CN regions for the last ten contests.
+    :param request:
+    :return:
+    """
+    records = (
+        await Contest.find(
+            Contest.user_num_us >= 0,
+            Contest.user_num_cn >= 0,
+            projection_model=ResultOfContestsUserNum,
+        )
+        .sort(-Contest.startTime)
+        .limit(10)
+        .to_list()
+    )
+    return records
 
 
 @router.get("/count")
