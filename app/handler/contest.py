@@ -122,28 +122,27 @@ async def is_cn_contest_data_ready(
             )
         )[0].json()
         fallback_local = cn_data.get("fallback_local")
-        if fallback_local is None:
-            us_data = (
-                await multi_http_request(
-                    {
-                        "req": {
-                            "url": f"https://leetcode.com/contest/api/ranking/{contest_name}/",
-                            "method": "GET",
-                        }
-                    }
-                )
-            )[0].json()
-            # check user_num in two different regions, if they are equal then return True
-            is_satisfied = (cn_user_num := cn_data.get("user_num")) >= (
-                us_user_num := us_data.get("user_num")
-            )
-            logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
-            if is_satisfied:
-                await save_user_num(contest_name)
-            return is_satisfied
-        else:
+        if fallback_local is not None:
             logger.info(f"check {fallback_local=} unsatisfied")
             return False
+        us_data = (
+            await multi_http_request(
+                {
+                    "req": {
+                        "url": f"https://leetcode.com/contest/api/ranking/{contest_name}/",
+                        "method": "GET",
+                    }
+                }
+            )
+        )[0].json()
+        # check user_num in two different regions, if they are equal then return True
+        is_satisfied = (cn_user_num := cn_data.get("user_num")) >= (
+            us_user_num := us_data.get("user_num")
+        )
+        logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
+        if is_satisfied:
+            await save_user_num(contest_name)
+        return is_satisfied
     except Exception as e:
         logger.error(f"check fallback_local error={e}")
         return False
