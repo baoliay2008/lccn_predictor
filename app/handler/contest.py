@@ -138,6 +138,8 @@ async def is_cn_contest_data_ready(
                 us_user_num := us_data.get("user_num")
             )
             logger.info(f"check {cn_user_num=} {us_user_num=} {is_satisfied=}")
+            if is_satisfied:
+                await save_user_num(contest_name)
             return is_satisfied
         else:
             logger.info(f"check {fallback_local=} unsatisfied")

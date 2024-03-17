@@ -17,7 +17,6 @@ from app.core.predictor import predict_contest
 from app.handler.contest import (
     is_cn_contest_data_ready,
     save_recent_and_next_two_contests,
-    save_user_num,
 )
 from app.handler.contest_record import (
     save_archive_contest_records,
@@ -84,7 +83,6 @@ async def composed_predict_jobs(
     await save_archive_contest_records(
         contest_name=contest_name, data_region="CN", save_users=False
     )
-    await save_user_num(contest_name)
 
 
 async def pre_save_predict_users(contest_name: str) -> None:
