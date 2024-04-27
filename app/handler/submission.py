@@ -133,7 +133,6 @@ async def save_real_time_rank(
         for (username, data_region), rank_list in real_time_rank_map.items()
     ]
     logger.info("updating real_time_rank field in ContestRecordArchive collection")
-    # TODO OOM here
     await gather_with_limited_concurrency(tasks, max_con_num=5)
     logger.success(f"finished updating real_time_rank for {contest_name=}")
 
@@ -194,7 +193,6 @@ async def save_submission(
         for submission in submissions
     ]
     logger.info("updating Submission collection")
-    # TODO OOM here
     await gather_with_limited_concurrency(tasks, max_con_num=5)
     # Old submissions may be rejudged, must be deleted here, or will cause error when plotting.
     await Submission.find(
