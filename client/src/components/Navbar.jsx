@@ -3,33 +3,37 @@ import { faCheck, faHouse, faPalette } from "@fortawesome/free-solid-svg-icons";
 import { themes } from "../data/constants";
 import { DataThemeContext } from "../App";
 import { Link } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 const ThemeButton = () => {
   const { dataTheme, setDataTheme } = useContext(DataThemeContext);
+  const [showThemeList, setShowThemeList] = useState(false);
+
   return (
     <div className="dropdown dropdown-end">
-      <label tabIndex={0} className="btn m-1">
+      <label className="btn m-1" tabIndex={0} onClick={() => setShowThemeList(!showThemeList)}>
         <span className="hidden md:flex">Theme</span>
         <FontAwesomeIcon className="md:hidden" icon={faPalette} size="lg" />
       </label>
-      <ul
-        tabIndex={0}
-        className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
-      >
-        {themes.map((t) => (
-          <li
-            key={t}
-            onClick={() => setDataTheme(t)}
-            className={t === dataTheme ? "bg-primary" : ""}
-          >
-            <div>
-              {t}
-              {t === dataTheme && <FontAwesomeIcon icon={faCheck} size="lg" />}
-            </div>
-          </li>
-        ))}
-      </ul>
+
+      {showThemeList &&
+        <ul tabIndex={0} onBlur={() => setShowThemeList(false)}
+          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-44 theme-list-scrollbar 
+          block max-h-[400px] overflow-y-auto"
+        >
+          {themes.map((t) => (
+            <li
+              key={t}
+              onClick={() => setDataTheme(t)}
+              className={t === dataTheme ? "bg-primary" : ""}
+            >
+              <div>
+                {t}
+                {t === dataTheme && <FontAwesomeIcon icon={faCheck} size="lg" />}
+              </div>
+            </li>
+          ))}
+        </ul>}
     </div>
   );
 };
