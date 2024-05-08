@@ -3,22 +3,46 @@ import { faCheck, faHouse, faPalette } from "@fortawesome/free-solid-svg-icons";
 import { themes } from "../data/constants";
 import { DataThemeContext } from "../App";
 import { Link } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 
 const ThemeButton = () => {
   const { dataTheme, setDataTheme } = useContext(DataThemeContext);
   const [showThemeList, setShowThemeList] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const handleClickOutside = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setShowThemeList(false);
+    }
+  };
+  useEffect(() => {
+    // Add event listener for clicks when the dropdown is open
+    if (showThemeList) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    // Clean up event listener on component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showThemeList]);
 
   return (
-    <div className="dropdown dropdown-end">
-      <label className="btn m-1" tabIndex={0} onClick={() => setShowThemeList(!showThemeList)}>
+    <div className="dropdown dropdown-end" ref={dropdownRef}>
+      <label
+        className="btn m-1"
+        tabIndex={0}
+        onClick={() => setShowThemeList(!showThemeList)}
+      >
         <span className="hidden md:flex">Theme</span>
         <FontAwesomeIcon className="md:hidden" icon={faPalette} size="lg" />
       </label>
 
-      {showThemeList &&
-        <ul tabIndex={0} onBlur={() => setShowThemeList(false)}
-          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-44 theme-list-scrollbar 
+      {showThemeList && (
+        <ul
+          tabIndex={0}
+          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-44 theme-list-scrollbar
           block max-h-[400px] overflow-y-auto"
         >
           {themes.map((t) => (
@@ -29,11 +53,14 @@ const ThemeButton = () => {
             >
               <div>
                 {t}
-                {t === dataTheme && <FontAwesomeIcon icon={faCheck} size="lg" />}
+                {t === dataTheme && (
+                  <FontAwesomeIcon icon={faCheck} size="lg" />
+                )}
               </div>
             </li>
           ))}
-        </ul>}
+        </ul>
+      )}
     </div>
   );
 };
