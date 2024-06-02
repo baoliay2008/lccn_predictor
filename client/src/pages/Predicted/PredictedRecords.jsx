@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import ReactEcharts from "echarts-for-react";
-
+import { ToastContainer, toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -276,6 +276,7 @@ const PredictedRecordsSearch = ({
 
   return (
     <div className="container mx-auto text-center">
+      <ToastContainer />
       <form onSubmit={(e) => handleSubmit(e)}>
         <div
           style={{
@@ -334,67 +335,71 @@ const PredictedRecordsTable = ({ predictedRecords, setUser }) => {
           </tr>
         </thead>
         <tbody>
-          {predictedRecords.map((record, i) => (
-            <tr key={i} className="hover">
-              <th>#{record.rank}</th>
-              <td>
-                {record.data_region === "CN" ? (
-                  <a
-                    className="link link-secondary link-hover"
-                    href={`https://leetcode.cn/u/${record.username}`}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                  >
-                    {record.username}
-                  </a>
-                ) : (
-                  <a
-                    className="link link-accent link-hover"
-                    href={`https://leetcode.com/${record.username}`}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                  >
-                    {record.username}
-                  </a>
-                )}
-              </td>
-              <td className="hidden md:table-cell">{record.country_name}</td>
-              <td className="hidden sm:table-cell">
-                {record.old_rating.toFixed(2)}
-              </td>
-              <td
-                style={{
-                  backgroundColor:
-                    record.delta_rating > 0
-                      ? `hsla(${trendColorsHSL.up}, ${
-                          0.1 + record.delta_rating / 100
-                        })`
-                      : `hsla(${trendColorsHSL.down}, ${
-                          0.2 - record.delta_rating / 100
-                        })`,
-                }}
-              >
-                {record.delta_rating > 0
-                  ? "+" + record.delta_rating.toFixed(2)
-                  : record.delta_rating.toFixed(2)}
-              </td>
-              <td>{record.new_rating.toFixed(2)}</td>
-              <td>
-                <label
-                  htmlFor="my-modal-4"
-                  className="btn btn-xs"
-                  onClick={() =>
-                    setUser({
-                      username: record.username,
-                      data_region: record.data_region,
-                    })
-                  }
+          {predictedRecords.length === 0 ? (
+            <div>toast.error("Username Not Found")</div>
+          ) : (
+            predictedRecords.map((record, i) => (
+              <tr key={i} className="hover">
+                <th>#{record.rank}</th>
+                <td>
+                  {record.data_region === "CN" ? (
+                    <a
+                      className="link link-secondary link-hover"
+                      href={`https://leetcode.cn/u/${record.username}`}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      {record.username}
+                    </a>
+                  ) : (
+                    <a
+                      className="link link-accent link-hover"
+                      href={`https://leetcode.com/${record.username}`}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      {record.username}
+                    </a>
+                  )}
+                </td>
+                <td className="hidden md:table-cell">{record.country_name}</td>
+                <td className="hidden sm:table-cell">
+                  {record.old_rating.toFixed(2)}
+                </td>
+                <td
+                  style={{
+                    backgroundColor:
+                      record.delta_rating > 0
+                        ? `hsla(${trendColorsHSL.up}, ${
+                            0.1 + record.delta_rating / 100
+                          })`
+                        : `hsla(${trendColorsHSL.down}, ${
+                            0.2 - record.delta_rating / 100
+                          })`,
+                  }}
                 >
-                  plot
-                </label>
-              </td>
-            </tr>
-          ))}
+                  {record.delta_rating > 0
+                    ? "+" + record.delta_rating.toFixed(2)
+                    : record.delta_rating.toFixed(2)}
+                </td>
+                <td>{record.new_rating.toFixed(2)}</td>
+                <td>
+                  <label
+                    htmlFor="my-modal-4"
+                    className="btn btn-xs"
+                    onClick={() =>
+                      setUser({
+                        username: record.username,
+                        data_region: record.data_region,
+                      })
+                    }
+                  >
+                    plot
+                  </label>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
