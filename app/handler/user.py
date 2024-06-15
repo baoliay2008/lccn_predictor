@@ -66,7 +66,14 @@ async def upsert_users_rating_and_attended_contests_count(
 
 
 @exception_logger_reraise
-async def update_all_users_in_database(batch_size: int = 100) -> None:
+async def update_all_users_in_database(
+    batch_size: int = 100,
+) -> None:
+    """
+    For all users in the User collection, update their rating and attended_contests_count.
+    :param batch_size:
+    :return:
+    """
     total_count = await User.count()
     logger.info(f"User collection now has {total_count=}")
     for i in range(0, total_count, batch_size):
@@ -96,11 +103,11 @@ async def update_all_users_in_database(batch_size: int = 100) -> None:
                 )
         await gather_with_limited_concurrency(
             [
-                # US site has a strong rate limit
-                gather_with_limited_concurrency(cn_tasks, 20),
-                gather_with_limited_concurrency(us_tasks, 5),
+                # CN site has a strong rate limit
+                gather_with_limited_concurrency(cn_tasks, 4),
+                gather_with_limited_concurrency(us_tasks, 25),
             ],
-            25,
+            30,
         )
 
 
@@ -173,9 +180,9 @@ async def save_users_of_contest(
             )
     await gather_with_limited_concurrency(
         [
-            # US site has a strong rate limit
-            gather_with_limited_concurrency(cn_tasks, 20),
-            gather_with_limited_concurrency(us_tasks, 5),
-            25,
+            # CN site has a strong rate limit
+            gather_with_limited_concurrency(cn_tasks, 4),
+            gather_with_limited_concurrency(us_tasks, 25),
+            30,
         ],
     )
