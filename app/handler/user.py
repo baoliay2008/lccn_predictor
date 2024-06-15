@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 from beanie.odm.operators.update.general import Set
 from loguru import logger
@@ -10,17 +11,20 @@ from app.constants import (
 from app.crawler.user import request_user_rating_and_attended_contests_count
 from app.db.models import DATA_REGION, ContestRecordArchive, ContestRecordPredict, User
 from app.db.mongodb import get_async_mongodb_collection
+from app.db.views import UserKey
 from app.utils import exception_logger_reraise, gather_with_limited_concurrency
 
 
 async def upsert_users_rating_and_attended_contests_count(
     data_region: DATA_REGION,
     username: str,
+    save_new_user: bool = True,
 ) -> None:
     """
     Upsert users rating and attendedContestsCount by sending HTTP request to get latest data.
     :param data_region:
     :param username:
+    :param save_new_user:
     :return:
     """
     try:
@@ -32,6 +36,9 @@ async def upsert_users_rating_and_attended_contests_count(
             logger.info(
                 f"graphql data is None, new user found, {data_region=} {username=}"
             )
+            if not save_new_user:
+                logger.info(f"{save_new_user=} do nothing.")
+                return
             rating = DEFAULT_NEW_USER_RATING
             attended_contests_count = DEFAULT_NEW_USER_ATTENDED_CONTESTS_COUNT
         user = User(
@@ -56,6 +63,45 @@ async def upsert_users_rating_and_attended_contests_count(
         )
     except Exception as e:
         logger.exception(f"user update error. {data_region=} {username=} Exception={e}")
+
+
+@exception_logger_reraise
+async def update_all_users_in_database(batch_size: int = 100) -> None:
+    total_count = await User.count()
+    logger.info(f"User collection now has {total_count=}")
+    for i in range(0, total_count, batch_size):
+        logger.info(f"progress = {i / total_count* 100 :.2f}%")
+        docs: List[UserKey] = await (
+            User.find_all()
+            .sort(-User.rating)
+            .skip(i)
+            .limit(batch_size)
+            .project(UserKey)
+            .to_list()
+        )
+        cn_tasks = []
+        us_tasks = []
+        for doc in docs:
+            if doc.data_region == "CN":
+                cn_tasks.append(
+                    upsert_users_rating_and_attended_contests_count(
+                        doc.data_region, doc.username, False
+                    )
+                )
+            else:
+                us_tasks.append(
+                    upsert_users_rating_and_attended_contests_count(
+                        doc.data_region, doc.username, False
+                    )
+                )
+        await gather_with_limited_concurrency(
+            [
+                # US site has a strong rate limit
+                gather_with_limited_concurrency(cn_tasks, 20),
+                gather_with_limited_concurrency(us_tasks, 5),
+            ],
+            25,
+        )
 
 
 @exception_logger_reraise
@@ -127,8 +173,9 @@ async def save_users_of_contest(
             )
     await gather_with_limited_concurrency(
         [
-            # CN site has a strong rate limit
-            gather_with_limited_concurrency(cn_tasks, 1),
-            gather_with_limited_concurrency(us_tasks, 1),
+            # US site has a strong rate limit
+            gather_with_limited_concurrency(cn_tasks, 20),
+            gather_with_limited_concurrency(us_tasks, 5),
+            25,
         ],
     )
