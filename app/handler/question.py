@@ -106,6 +106,4 @@ async def save_questions(
         logger.success("finished")
         return questions
     except Exception as e:
-        logger.error(
-            f"failed to fill questions fields for {contest_name=} {questions=} {e=}"
-        )
+        logger.error(f"failed to fill questions fields for {contest_name=} {e=}")

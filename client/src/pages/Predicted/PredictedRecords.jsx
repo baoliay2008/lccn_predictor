@@ -18,7 +18,7 @@ import { trendColorsHSL } from "../../utils";
 const QuestionFinishedChart = ({ questionsRaw }) => {
   // console.log("QuestionFinishedChart questionsRaw=", questionsRaw);
   const questions = [...questionsRaw].sort((a, b) =>
-    a.credit === b.credit ? a.question_id - b.question_id : a.credit - b.credit
+    a.credit === b.credit ? a.qi - b.qi : a.credit - b.credit
   );
 
   const real_time_count = [["Minute", "Question", "Count"]];
