@@ -7,7 +7,7 @@ const Footer = () => {
       <div>
         <span className="footer-title">LCCN Predictor</span>
         <a
-          href="https://twitter.com/intent/tweet?text=lccn.lbao.site%20Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor%20@l__bao"
+          href="https://twitter.com/intent/tweet?text=lccn.lbao.site%20Leetcode%20weekly%20and%20biweekly%20contest%20rating%20predictor"
           target="_blank"
           rel="noreferrer noopener"
         >

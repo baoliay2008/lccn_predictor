@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import useSWR from "swr";
 import Pagination from "../../components/Pagination";
 import { baseUrl } from "../../data/constants";
+import ContestsUserNum from "../Contests/ContestsUserNum";
 
 const ContestsTable = ({ contests }) => {
   return (
@@ -123,6 +124,7 @@ const PredictedContest = () => {
 
   return (
     <>
+      <ContestsUserNum />
       {contests ? <ContestsTable contests={contests} /> : undefined}
       <Pagination
         totalCount={totalCount}

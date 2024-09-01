@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Request
@@ -31,6 +31,8 @@ async def contests_user_num_last_ten(
     """
     records = (
         await Contest.find(
+            # In any situation, there must have been more than 10 contests in the last 60 days
+            Contest.startTime > datetime.utcnow() - timedelta(days=60),
             Contest.user_num_us >= 0,
             Contest.user_num_cn >= 0,
             projection_model=ResultOfContestsUserNum,
