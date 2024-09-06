@@ -39,6 +39,8 @@ async def save_predict_contest_records(
     ).delete()
     unique_keys = set()
     for contest_record_dict in contest_record_list:
+        # TODO: LCUS changed API, now we have to use `user_slug`
+        contest_record_dict["username"] = contest_record_dict["user_slug"]
         key = (contest_record_dict["data_region"], contest_record_dict["username"])
         if key in unique_keys:
             # during the contest, request_contest_ranking may return duplicated records (user ranking is changing)
@@ -82,6 +84,8 @@ async def save_archive_contest_records(
     )
     contest_records = list()
     for contest_record_dict in contest_record_list:
+        # TODO: LCUS changed API, now we have to use `user_slug`
+        contest_record_dict["username"] = contest_record_dict["user_slug"]
         contest_record_dict.update({"contest_name": contest_name})
         contest_record = ContestRecordArchive.model_validate(contest_record_dict)
         contest_records.append(contest_record)
