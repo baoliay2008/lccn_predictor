@@ -5,6 +5,10 @@ from typing import Any, Dict, List, Optional
 import httpx
 from loguru import logger
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0",
+}
+
 
 async def multi_http_request(
     multi_requests: Dict,
@@ -46,7 +50,7 @@ async def multi_http_request(
             f"requests_list={[(key, response_mapper[key]) for key, request in requests_list]}"
         )
         await asyncio.sleep(wait_time)
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(headers=headers) as client:
             tasks = [client.request(**request) for key, request in requests_list]
             response_list = await asyncio.gather(*tasks, return_exceptions=True)
             wait_time = 0
@@ -58,6 +62,7 @@ async def multi_http_request(
                     # response could be an Exception here
                     logger.warning(
                         f"multi_http_request error: {request=} "
+                        f"response.status_code: "
                         f"{response.status_code if isinstance(response, httpx.Response) else response}"
                     )
                     response_mapper[key] += 1
