@@ -34,7 +34,7 @@ Hopefully, you can get the predicted result within **15-30 minutes** after the c
 ## Database
 
 * [MongoDB](https://www.mongodb.com/): NoSQL database
-* [Beanie](https://roman-right.github.io/beanie/): ODM for MongoDB
+* [Beanie](https://beanie-odm.dev/): ODM for MongoDB
 
 ## Backend
 
@@ -136,7 +136,8 @@ npm run build
   > change frontend from server-side rendering([Jinja](https://jinja.palletsprojects.com/) + [Materialize](https://materializecss.com/)) to client-side rendering([React](https://reactjs.org/)).
 * v0.1.2(2023/10/04)
   > refine backend logic to enhance robustness and clean up deprecated static site rendering code
-
+* v0.1.3(2023/12/28)
+  > last version prior to the rewrite of the Elo rating algorithm
 ---
 
 # Supported by
