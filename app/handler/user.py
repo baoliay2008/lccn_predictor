@@ -104,8 +104,8 @@ async def update_all_users_in_database(
         await gather_with_limited_concurrency(
             [
                 # CN site has a strong rate limit
-                gather_with_limited_concurrency(cn_tasks, 4),
-                gather_with_limited_concurrency(us_tasks, 25),
+                gather_with_limited_concurrency(cn_tasks, 1),
+                gather_with_limited_concurrency(us_tasks, 5),
             ],
             30,
         )
@@ -163,6 +163,7 @@ async def save_users_of_contest(
         ]
     cursor = col.aggregate(pipeline)
     docs = await cursor.to_list(length=None)
+    logger.info(f"docs length = {len(docs)}")
     cn_tasks = []
     us_tasks = []
     for doc in docs:
@@ -181,8 +182,8 @@ async def save_users_of_contest(
     await gather_with_limited_concurrency(
         [
             # CN site has a strong rate limit
-            gather_with_limited_concurrency(cn_tasks, 4),
-            gather_with_limited_concurrency(us_tasks, 25),
-            30,
+            gather_with_limited_concurrency(cn_tasks, 1),
+            gather_with_limited_concurrency(us_tasks, 5),
         ],
+        30,
     )

@@ -42,7 +42,7 @@ async def request_contest_records(
     ]
     responses = await multi_http_request(
         {url: {"url": url, "method": "GET"} for url in url_list},
-        concurrent_num=20 if data_region == "US" else 50,
+        concurrent_num=5 if data_region == "US" else 10,
     )
     for res in responses:
         if res is None:
