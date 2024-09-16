@@ -2,7 +2,7 @@ import ReactEcharts from "echarts-for-react";
 
 const ContestsUserNumStackedArea = ({ contests }) => {
   contests.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-  console.log(contests);
+  // console.log(contests);
   const titles = contests.map((contest) =>
     contest.title.replace(/eekly Contest /g, "")
   );

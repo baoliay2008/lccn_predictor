@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-import ReactEcharts from "echarts-for-react";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -12,241 +10,10 @@ import {
 
 import useSWR from "swr";
 import Pagination from "../../components/Pagination";
+import QuestionFinishedChart from "../../components/charts/QuestionFinishedChart";
+import RealTimeRankChart from "../../components/charts/RealTimeRankChart";
 import { baseUrl } from "../../data/constants";
 import { trendColorsHSL } from "../../utils";
-
-const QuestionFinishedChart = ({ questionsRaw }) => {
-  // console.log("QuestionFinishedChart questionsRaw=", questionsRaw);
-  const questions = [...questionsRaw].sort((a, b) =>
-    a.credit === b.credit ? a.qi - b.qi : a.credit - b.credit
-  );
-
-  const real_time_count = [["Minute", "Question", "Count"]];
-  for (let i = 1; i <= questions.length; i++) {
-    for (let j = 1; j <= questions[0].real_time_count?.length; j++) {
-      real_time_count.push([
-        j,
-        `Q${i}`,
-        questions[i - 1].real_time_count[j - 1],
-      ]);
-    }
-  }
-
-  const questionsId = ["Q1", "Q2", "Q3", "Q4"];
-  const datasetWithFilters = [];
-  const seriesList = [];
-
-  questionsId.forEach((id) => {
-    const datasetId = "dataset_" + id;
-    datasetWithFilters.push({
-      id: datasetId,
-      fromDatasetId: "dataset_raw",
-      transform: {
-        type: "filter",
-        config: {
-          and: [{ dimension: "Question", "=": id }],
-        },
-      },
-    });
-    seriesList.push({
-      type: "line",
-      datasetId: datasetId,
-      showSymbol: false,
-      name: id,
-      endLabel: {
-        show: true,
-        formatter: function (params) {
-          return params.value[1] + ": " + params.value[2];
-        },
-      },
-      labelLayout: {
-        moveOverlap: "shiftY",
-      },
-      emphasis: {
-        focus: "series",
-      },
-      encode: {
-        x: "Minute",
-        y: "Count",
-        label: ["Question", "Count"],
-        itemName: "Minute",
-        tooltip: ["Count"],
-      },
-    });
-  });
-
-  const option = {
-    animation: true,
-    animationDuration: 10000,
-    dataset: [
-      {
-        id: "dataset_raw",
-        source: real_time_count,
-      },
-      ...datasetWithFilters,
-    ],
-    title: {
-      text: "Question Finished Count",
-      x: "center",
-    },
-    tooltip: {
-      order: "valueDesc",
-      trigger: "axis",
-    },
-    xAxis: {
-      type: "category",
-      name: "Minute",
-    },
-    yAxis: {
-      name: "Accepted",
-      // axisLabel: {
-      //   rotate: 45,
-      //   margin: 1
-      // }
-    },
-    grid: {
-      left: "70em",
-      right: "70em",
-    },
-    series: seriesList,
-  };
-
-  // console.log("question option= ", option);
-  return (
-    <ReactEcharts
-      option={option}
-      // theme="dark"
-      // lazyUpdate={true}
-      // opts={{renderer: "svg"}}
-      style={{
-        height: "25em",
-      }}
-    />
-  );
-};
-
-const RealTimeRankChart = ({ user }) => {
-  // console.log(`user=${user} ${user?.username} ${user?.data_region}`);
-
-  const { titleSlug } = useParams();
-
-  const { data } = useSWR(
-    [
-      `${baseUrl}/contest-records/real-time-rank`,
-      JSON.stringify({
-        contest_name: titleSlug,
-        user: user,
-      }),
-    ],
-    ([url, body]) =>
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: body,
-      }).then((r) => r.json()),
-    { revalidateOnFocus: false }
-  );
-  const rankList = data?.real_time_rank;
-  if (!rankList) return null;
-
-  const realTimeRank = [["Minute", "Username", "Rank"]];
-  for (let j = 1; j <= rankList.length; j++) {
-    realTimeRank.push([j, user.username, rankList[j - 1]]);
-  }
-
-  const users = [user.username];
-  const datasetWithFilters = [];
-  const seriesList = [];
-
-  // console.log("users", users);
-  // console.log("realTimeRank", realTimeRank);
-
-  users.forEach((username) => {
-    const datasetId = "dataset_" + username;
-    datasetWithFilters.push({
-      id: datasetId,
-      fromDatasetId: "dataset_raw",
-      transform: {
-        type: "filter",
-        config: {
-          and: [{ dimension: "Username", "=": username }],
-        },
-      },
-    });
-    seriesList.push({
-      type: "line",
-      datasetId: datasetId,
-      showSymbol: false,
-      name: username,
-      endLabel: {
-        show: true,
-        formatter: function (params) {
-          return params.value[1] + ": " + params.value[2];
-        },
-      },
-      labelLayout: {
-        moveOverlap: "shiftY",
-      },
-      emphasis: {
-        focus: "series",
-      },
-      encode: {
-        x: "Minute",
-        y: "Rank",
-        label: ["Username", "Rank"],
-        itemName: "Minute",
-        tooltip: ["Rank"],
-      },
-    });
-  });
-
-  const option = {
-    animationDuration: 10000,
-    dataset: [
-      {
-        id: "dataset_raw",
-        source: realTimeRank,
-      },
-      ...datasetWithFilters,
-    ],
-    title: {
-      text: "User Real Time Rank",
-      x: "center",
-    },
-    tooltip: {
-      order: "valueDesc",
-      trigger: "axis",
-    },
-    xAxis: {
-      type: "category",
-      name: "Minute",
-    },
-    yAxis: {
-      name: "Rank",
-      axisLabel: {
-        rotate: 45,
-        margin: 1,
-      },
-    },
-    grid: {
-      // left:"70em",
-      right: "70em",
-    },
-    series: seriesList,
-  };
-
-  // console.log("realTimeRank option=", option);
-
-  return (
-    <ReactEcharts
-      option={option}
-      // theme="dark"
-      // lazyUpdate={true}
-      // opts={{renderer: "svg"}}
-      style={{ height: "25em" }}
-    />
-  );
-};
 
 const PredictedRecordsSearch = ({
   titleSlug,
@@ -460,6 +227,26 @@ const PredictedRecords = () => {
   // if (predictedRecordsURL === null) return;
   // console.log(`predictedRecords=${predictedRecords}`);
 
+  // console.log(`user=${user} ${user?.username} ${user?.data_region}`);
+
+  const { data: rankData } = useSWR(
+    [
+      `${baseUrl}/contest-records/real-time-rank`,
+      JSON.stringify({
+        contest_name: titleSlug,
+        user: user,
+      }),
+    ],
+    ([url, body]) =>
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      }).then((r) => r.json()),
+    { revalidateOnFocus: false }
+  );
+  const rankList = rankData?.real_time_rank;
+
   if (!predictedRecords || isLoading)
     return (
       <div className="grid h-screen place-items-center ">
@@ -517,7 +304,7 @@ const PredictedRecords = () => {
       <label htmlFor="my-modal-4" className="modal cursor-pointer">
         <label className="modal-box relative" htmlFor="">
           <div className="container mx-auto text-center">
-            {user && <RealTimeRankChart user={user} />}
+            {user && <RealTimeRankChart user={user} rankList={rankList} />}
             {!user && (
               <div>
                 <progress className="progress w-56"></progress>
