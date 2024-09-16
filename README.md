@@ -19,8 +19,7 @@ Hopefully, you can get the predicted result within **15-30 minutes** after the c
 
 ## More Information
 
-* [🔗 Chinese introduction on leetcode.cn](https://leetcode.cn/circle/discuss/2Ibimx/)
-* [🔗 refined-leetcode](https://github.com/XYShaoKang/refined-leetcode): A Chrome extension for leetcode.**cn**, created by [@XYShaoKang](https://github.com/XYShaoKang)
+* [🔗 refined-leetcode](https://github.com/XYShaoKang/refined-leetcode): A Chrome extension for leetcode.cn, created by [@XYShaoKang](https://github.com/XYShaoKang)
 
 # Underlying Mechanism
 
@@ -114,7 +113,7 @@ vi src/data/constants.js
 # it should be "http://localhost:55555/api/v1"
 
 # local test
-npm start
+npm run dev
 
 # publish
 npm run build
