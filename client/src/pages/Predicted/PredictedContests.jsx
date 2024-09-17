@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 
 import useSWR from "swr";
 import Pagination from "../../components/Pagination";
@@ -79,8 +79,8 @@ const PredictedContest = () => {
   }, []);
 
   const pageSize = 10; // hard code `pageSize` temporarily
-
-  const [pageNum, setPageNum] = useState(1);
+  const { pageNum: pageNumStr } = useParams();
+  const pageNum = parseInt(pageNumStr) || 1;
   const skipNum = pageSize * (pageNum - 1);
 
   const {
@@ -129,7 +129,7 @@ const PredictedContest = () => {
       <Pagination
         totalCount={totalCount}
         pageNum={pageNum}
-        setPageNum={setPageNum}
+        pageURL={""}
         pageSize={pageSize}
       />
     </>

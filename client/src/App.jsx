@@ -42,9 +42,9 @@ function App() {
             </div>
             <div className="divider"></div>
             <Routes>
-              <Route path="/" element={<PredictedContest />} />
+              <Route path="/:pageNum?" element={<PredictedContest />} />
               <Route
-                path="/predicted/:titleSlug"
+                path="/predicted/:titleSlug/:pageNum?"
                 element={<PredictedRecords />}
               />
             </Routes>

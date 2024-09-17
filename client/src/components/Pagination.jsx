@@ -1,7 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAnglesLeft, faAnglesRight } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 
-const Pagination = ({ totalCount, pageNum, setPageNum, pageSize }) => {
+const Pagination = ({ totalCount, pageNum, pageURL, pageSize }) => {
   const maxPageNum = Math.ceil(totalCount / pageSize);
   return (
     <div
@@ -12,85 +13,63 @@ const Pagination = ({ totalCount, pageNum, setPageNum, pageSize }) => {
       }}
     >
       <div className="join">
-        <button
+        <Link
           className={"join-item btn " + (pageNum === 1 ? "btn-disabled" : "")}
-          onClick={() => setPageNum(1)}
+          to={`${pageURL}/1`}
         >
           <FontAwesomeIcon icon={faAnglesLeft} />
-        </button>
+        </Link>
         {pageNum - 4 >= 1 && pageNum >= maxPageNum && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum - 4)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum - 4}`}>
             {pageNum - 4}
-          </button>
+          </Link>
         )}
         {pageNum - 3 >= 1 && pageNum >= maxPageNum - 1 && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum - 3)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum - 3}`}>
             {pageNum - 3}
-          </button>
+          </Link>
         )}
         {pageNum - 2 >= 1 && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum - 2)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum - 2}`}>
             {pageNum - 2}
-          </button>
+          </Link>
         )}
         {pageNum - 1 >= 1 && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum - 1)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum - 1}`}>
             {pageNum - 1}
-          </button>
+          </Link>
         )}
-        <button className="join-item btn btn-active">{pageNum}</button>
+        <Link className="join-item btn btn-active" to={`${pageURL}/${pageNum}`}>
+          {pageNum}
+        </Link>
         {pageNum + 1 <= maxPageNum && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum + 1)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum + 1}`}>
             {pageNum + 1}
-          </button>
+          </Link>
         )}
         {pageNum + 2 <= maxPageNum && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum + 2)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum + 2}`}>
             {pageNum + 2}
-          </button>
+          </Link>
         )}
         {pageNum + 3 <= maxPageNum && pageNum <= 2 && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum + 3)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum + 3}`}>
             {pageNum + 3}
-          </button>
+          </Link>
         )}
         {pageNum + 4 <= maxPageNum && pageNum <= 1 && (
-          <button
-            className="join-item btn"
-            onClick={() => setPageNum(pageNum + 4)}
-          >
+          <Link className="join-item btn" to={`${pageURL}/${pageNum + 4}`}>
             {pageNum + 4}
-          </button>
+          </Link>
         )}
-        <button
+        <Link
           className={
             "join-item btn " + (pageNum === maxPageNum ? "btn-disabled" : "")
           }
-          onClick={() => setPageNum(maxPageNum)}
+          to={`${pageURL}/${maxPageNum}`}
         >
           <FontAwesomeIcon icon={faAnglesRight} />
-        </button>
+        </Link>
       </div>
     </div>
   );
