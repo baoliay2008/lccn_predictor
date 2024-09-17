@@ -1,8 +1,6 @@
 import ReactEcharts from "echarts-for-react";
 
 const RealTimeRankChart = ({ user, rankList }) => {
-  if (!rankList) return null;
-
   const realTimeRank = [["Minute", "Username", "Rank"]];
   for (let j = 1; j <= rankList.length; j++) {
     realTimeRank.push([j, user.username, rankList[j - 1]]);

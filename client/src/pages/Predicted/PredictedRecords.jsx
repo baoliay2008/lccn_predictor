@@ -230,13 +230,15 @@ const PredictedRecords = () => {
   // console.log(`user=${user} ${user?.username} ${user?.data_region}`);
 
   const { data: rankData } = useSWR(
-    [
-      `${baseUrl}/contest-records/real-time-rank`,
-      JSON.stringify({
-        contest_name: titleSlug,
-        user: user,
-      }),
-    ],
+    user
+      ? [
+          `${baseUrl}/contest-records/real-time-rank`,
+          JSON.stringify({
+            contest_name: titleSlug,
+            user: user,
+          }),
+        ]
+      : null,
     ([url, body]) =>
       fetch(url, {
         method: "POST",
@@ -246,6 +248,7 @@ const PredictedRecords = () => {
     { revalidateOnFocus: false }
   );
   const rankList = rankData?.real_time_rank;
+  // console.log(`rankData=${rankData} rankList=${rankList} ${rankList?.length} ${!rankList}`)
 
   if (!predictedRecords || isLoading)
     return (
@@ -304,8 +307,8 @@ const PredictedRecords = () => {
       <label htmlFor="my-modal-4" className="modal cursor-pointer">
         <label className="modal-box relative" htmlFor="">
           <div className="container mx-auto text-center">
-            {user && <RealTimeRankChart user={user} rankList={rankList} />}
-            {!user && (
+            {rankList && <RealTimeRankChart user={user} rankList={rankList} />}
+            {!rankList && (
               <div>
                 <progress className="progress w-56"></progress>
                 <p className="text-center">Loading Real Time Rank</p>
