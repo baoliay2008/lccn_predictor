@@ -171,8 +171,8 @@ const PredictedRecordsTable = ({ predictedRecords, setUser }) => {
 const PredictedRecords = () => {
   const pageSize = 25; // hard code `pageSize` temporarily
 
-  const { titleSlug } = useParams();
-  const [pageNum, setPageNum] = useState(1);
+  const { titleSlug, pageNum: pageNumStr } = useParams();
+  const pageNum = parseInt(pageNumStr) || 1;
   const skipNum = pageSize * (pageNum - 1);
 
   const [predictedRecordsURL, setPredictedRecordsURL] = useState(null);
@@ -298,7 +298,7 @@ const PredictedRecords = () => {
         <Pagination
           totalCount={totalCount}
           pageNum={pageNum}
-          setPageNum={setPageNum}
+          pageURL={`/predicted/${titleSlug}`}
           pageSize={pageSize}
         />
       )}
