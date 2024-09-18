@@ -1,6 +1,7 @@
 import asyncio
 from typing import List, Optional
 
+from beanie.operators import In
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, NonNegativeInt, conint, conlist
 
@@ -109,13 +110,17 @@ async def contest_records_user(
     if not archived:
         records = await ContestRecordPredict.find(
             ContestRecordPredict.contest_name == contest_name,
-            ContestRecordPredict.username == username,
+            # ContestRecordPredict.username == username,
+            # Temporary workaround for the LCUS API user_slug change.
+            In(ContestRecordPredict.username, [username, username.lower()]),
             ContestRecordPredict.score != 0,
         ).to_list()
     else:
         records = await ContestRecordArchive.find(
             ContestRecordArchive.contest_name == contest_name,
-            ContestRecordArchive.username == username,
+            # ContestRecordArchive.username == username,
+            # Temporary workaround for the LCUS API user_slug change.
+            In(ContestRecordArchive.username, [username, username.lower()]),
             ContestRecordArchive.score != 0,
         ).to_list()
     return records
