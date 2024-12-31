@@ -1,10 +1,12 @@
+from typing import Final
+
 import numpy as np
 from scipy.signal import fftconvolve
 
 from app.core.elo import delta_coefficients
 
-EXPAND_SIZE = 100
-MAX_RATING = 4000 * EXPAND_SIZE
+EXPAND_SIZE: Final[int] = 100
+MAX_RATING: Final[int] = 4000 * EXPAND_SIZE
 
 
 def pre_calc_convolution(old_rating: np.ndarray) -> np.ndarray:
