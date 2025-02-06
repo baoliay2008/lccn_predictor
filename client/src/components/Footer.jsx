@@ -18,7 +18,7 @@ const Footer = () => {
         </a>
         <p>LeetCode weekly and biweekly contest rating predictor.</p>
         <p>
-          Copyright <FontAwesomeIcon icon={faCopyright} /> 2022-2024 &nbsp;
+          Copyright <FontAwesomeIcon icon={faCopyright} /> 2022-2025 &nbsp;
           <FontAwesomeIcon icon={faPen} /> L. Bao.
         </p>
       </div>
