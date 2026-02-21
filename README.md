@@ -1,3 +1,9 @@
+> [!WARNING]
+> ⚠️ **IMPORTANT NOTICE (Updated on Feb 20, 2026)** ⚠️
+> 
+> **This project will NOT be maintained anymore.** It has been moved to **[EntrantHub.com](https://entranthub.com)**, which already includes all the features from this site and more. 
+> 
+> The production server will be shutting down on **Feb 28, 2026**. All data has been recovered and URLs will be redirected to the exact page accordingly. Thanks!
 
 # Introduction
 
