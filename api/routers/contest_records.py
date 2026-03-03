@@ -129,6 +129,7 @@ async def contest_records_user(
 class QueryOfPredictedRating(BaseModel):
     contest_name: str
     users: conlist(UserKey, min_length=1, max_length=26)
+    hypothetical_entries: Optional[List[UserKey]] = None
 
 
 class ResultOfPredictedRating(BaseModel):
@@ -158,7 +159,22 @@ async def predicted_rating(
         )
         for user in query.users
     )
-    return await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks)
+
+    if query.hypothetical_entries:
+        hypothetical_tasks = (
+            ContestRecordPredict.find_one(
+                ContestRecordPredict.contest_name == query.contest_name,
+                ContestRecordPredict.data_region == entry.data_region,
+                ContestRecordPredict.username == entry.username,
+                projection_model=ResultOfPredictedRating,
+            )
+            for entry in query.hypothetical_entries
+        )
+        hypothetical_results = await asyncio.gather(*hypothetical_tasks)
+        results.extend(hypothetical_results)
+
+    return results
 
 
 class QueryOfRealTimeRank(BaseModel):
@@ -187,4 +203,58 @@ async def real_time_rank(
         ContestRecordArchive.data_region == query.user.data_region,
         ContestRecordArchive.username == query.user.username,
         projection_model=ResultOfRealTimeRank,
+    )
+
+
+class HypotheticalEntry(BaseModel):
+    contest_name: str
+    username: str
+    data_region: str
+    rank: int
+    score: int
+    finish_time: datetime
+
+
+class HypotheticalRatingChange(BaseModel):
+    old_rating: float
+    new_rating: float
+    delta_rating: float
+
+
+@router.post("/hypothetical-entry")
+async def hypothetical_entry(
+    request: Request,
+    entry: HypotheticalEntry,
+) -> HypotheticalRatingChange:
+    """
+    Calculate rating change based on a hypothetical entry.
+    :param request:
+    :param entry:
+    :return:
+    """
+    await check_contest_name(entry.contest_name)
+
+    # Fetch the user's current rating and attended contests count
+    user = await User.find_one(
+        User.username == entry.username,
+        User.data_region == entry.data_region,
+    )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    old_rating = user.rating
+    attended_contests_count = user.attendedContestsCount
+
+    # Calculate the new rating based on the hypothetical entry
+    rank_array = np.array([entry.rank])
+    rating_array = np.array([old_rating])
+    k_array = np.array([attended_contests_count])
+    delta_rating_array = elo_delta(rank_array, rating_array, k_array)
+    new_rating = old_rating + delta_rating_array[0]
+
+    return HypotheticalRatingChange(
+        old_rating=old_rating,
+        new_rating=new_rating,
+        delta_rating=delta_rating_array[0],
     )

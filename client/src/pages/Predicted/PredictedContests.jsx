@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import useSWR from "swr";
@@ -73,6 +73,118 @@ const ContestsTable = ({ contests }) => {
   );
 };
 
+const HypotheticalEntryForm = ({ titleSlug, setHypotheticalResult }) => {
+  const [username, setUsername] = useState("");
+  const [dataRegion, setDataRegion] = useState("US");
+  const [rank, setRank] = useState("");
+  const [score, setScore] = useState("");
+  const [finishTime, setFinishTime] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const response = await fetch(`${baseUrl}/contest-records/hypothetical-entry`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contest_name: titleSlug,
+        username,
+        data_region: dataRegion,
+        rank: parseInt(rank),
+        score: parseInt(score),
+        finish_time: new Date(finishTime).toISOString(),
+      }),
+    });
+    const result = await response.json();
+    setHypotheticalResult(result);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="container mx-auto text-center">
+      <div className="form-control">
+        <label className="input-group">
+          <span>Username</span>
+          <input
+            type="text"
+            placeholder="Username"
+            className="input input-bordered"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="input-group">
+          <span>Data Region</span>
+          <select
+            className="select select-bordered"
+            value={dataRegion}
+            onChange={(e) => setDataRegion(e.target.value)}
+            required
+          >
+            <option value="US">US</option>
+            <option value="CN">CN</option>
+          </select>
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="input-group">
+          <span>Rank</span>
+          <input
+            type="number"
+            placeholder="Rank"
+            className="input input-bordered"
+            value={rank}
+            onChange={(e) => setRank(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="input-group">
+          <span>Score</span>
+          <input
+            type="number"
+            placeholder="Score"
+            className="input input-bordered"
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div className="form-control">
+        <label className="input-group">
+          <span>Finish Time</span>
+          <input
+            type="datetime-local"
+            className="input input-bordered"
+            value={finishTime}
+            onChange={(e) => setFinishTime(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <button className="btn btn-primary" type="submit">
+        Calculate Hypothetical Rating Change
+      </button>
+    </form>
+  );
+};
+
+const HypotheticalResult = ({ result }) => {
+  if (!result) return null;
+
+  return (
+    <div className="container mx-auto text-center">
+      <h2>Hypothetical Rating Change</h2>
+      <p>Old Rating: {result.old_rating.toFixed(2)}</p>
+      <p>New Rating: {result.new_rating.toFixed(2)}</p>
+      <p>Delta Rating: {result.delta_rating.toFixed(2)}</p>
+    </div>
+  );
+};
+
 const PredictedContest = () => {
   useEffect(() => {
     document.title = "Predicted Contests";
@@ -100,6 +212,8 @@ const PredictedContest = () => {
     { revalidateOnFocus: false }
   );
   // console.log(`totalCount=${totalCount} pageNum=${pageNum}`);
+
+  const [hypotheticalResult, setHypotheticalResult] = useState(null);
 
   if (!contests || isLoading)
     return (
@@ -132,6 +246,11 @@ const PredictedContest = () => {
         pageURL={""}
         pageSize={pageSize}
       />
+      <HypotheticalEntryForm
+        titleSlug={contests[0].titleSlug}
+        setHypotheticalResult={setHypotheticalResult}
+      />
+      <HypotheticalResult result={hypotheticalResult} />
     </>
   );
 };
